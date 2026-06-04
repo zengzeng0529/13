@@ -97,22 +97,26 @@
     <main class="flex-1 p-4">
         
         <div v-if="currentTab === 'schedule'" class="space-y-4">
-            <div class="bg-amber-50/90 border-2 border-orange-200 p-3 rounded-2xl flex items-center justify-between shadow-xs">
-                <div class="flex items-center gap-3">
-                    <span class="text-3xl">🌤️</span>
-                    <div>
-                        <div class="font-bold text-xs text-stone-800">濟州島今日天氣 · 晴時多雲</div>
-                        <div class="text-[11px] text-stone-500 mt-0.5">氣溫: <span class="text-orange-500 font-bold">23°C</span> | 體感溫度: <span class="text-amber-600 font-bold">21.5°C</span></div>
-                    </div>
-                </div>
-                <div class="text-right text-[10px] bg-emerald-100 text-emerald-800 px-2 py-1 rounded-lg font-bold">✨ 雲端共同編輯中</div>
-            </div>
-
+            
             <div class="flex gap-2 overflow-x-auto pb-2 hide-scrollbar snap-x">
                 <button v-for="(day, index) in days" :key="index" @click="selectedDayIndex = index" :class="selectedDayIndex === index ? 'bg-orange-400 text-white border-orange-400 scale-105 shadow-sm' : 'bg-white text-stone-700 border-[#E2D3B7]'" class="flex flex-col items-center justify-center min-w-[64px] h-[74px] rounded-2xl border-2 snap-center transition duration-200 cursor-pointer">
                     <span class="text-xs font-bold uppercase tracking-wider" :class="selectedDayIndex === index ? 'text-orange-100' : 'text-stone-400'">{{ day.week }}</span>
                     <span class="text-lg font-bold mt-0.5 leading-none">{{ day.date.split('/')[1] }}</span>
                 </button>
+            </div>
+
+            <div class="bg-gradient-to-br from-sky-400 to-blue-500 text-white p-4 rounded-2xl shadow-sm flex items-center justify-between border border-sky-300/30">
+                <div class="flex items-center gap-3.5">
+                    <div class="text-4xl drop-shadow-md">🌤️</div>
+                    <div>
+                        <div class="font-bold text-sm tracking-wide">濟州島</div>
+                        <div class="text-[11px] text-sky-100/90 mt-0.5 font-medium">晴時多雲 · 共同編輯中</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-2xl font-bold tracking-tighter">23°C</div>
+                    <div class="text-[10px] text-sky-100/80 font-medium mt-0.5">體感溫度 21.5°C</div>
+                </div>
             </div>
 
             <div class="space-y-4 mt-1">
@@ -167,22 +171,22 @@
 
                         <div class="absolute left-0 top-6 w-1.5 h-8 rounded-r-md" :class="getCategoryBg(event.category)"></div>
 
-                        <div class="flex gap-3">
-                            <div class="w-16 h-16 bg-stone-50 rounded-xl overflow-hidden flex-shrink-0 border border-stone-200 flex items-center justify-center relative shadow-inner">
+                        <div class="flex gap-3 items-start">
+                            <div class="w-24 h-24 bg-stone-50 rounded-xl overflow-hidden flex-shrink-0 border border-stone-200 flex items-center justify-center relative shadow-inner">
                                 <img v-if="event.image" :src="event.image" class="w-full h-full object-cover">
-                                <span v-else class="text-2xl">{{ getCategoryEmoji(event.category) }}</span>
+                                <span v-else class="text-3xl">{{ getCategoryEmoji(event.category) }}</span>
                             </div>
 
-                            <div class="flex-1 min-w-0">
+                            <div class="flex-1 min-w-0 py-0.5">
                                 <div class="flex items-center gap-1.5">
                                     <span class="text-[9px] font-bold text-white px-1.5 py-0.5 rounded" :class="getCategoryBg(event.category)">
                                         {{ event.category }}
                                     </span>
                                     <span class="text-xs text-stone-400 font-bold"><i class="fa-regular fa-clock"></i> {{ event.time }}</span>
                                 </div>
-                                <h4 class="font-bold text-sm text-stone-900 mt-1 truncate">{{ event.name }}</h4>
+                                <h4 class="font-bold text-sm text-stone-900 mt-1.5 break-words line-clamp-2 leading-snug">{{ event.name }}</h4>
                                 
-                                <div class="flex flex-wrap gap-x-2.5 mt-1 text-[11px] text-stone-500">
+                                <div class="flex flex-wrap gap-x-2.5 mt-1.5 text-[11px] text-stone-500">
                                     <span v-if="event.hours && ['景點','住宿','美食','購物'].includes(event.category)"><i class="fa-regular fa-clock text-amber-500"></i> {{ event.hours }}</span>
                                     <span v-if="event.ticket && event.category === '景點'" class="text-emerald-600 font-bold"><i class="fa-solid fa-ticket"></i> {{ event.ticket }}</span>
                                 </div>
@@ -355,7 +359,7 @@
                     <button @click="deleteShoppingItem(sIdx)" class="absolute top-2 right-2 w-5 h-5 bg-stone-300 text-white rounded-full flex items-center justify-center text-[10px] cursor-pointer hover:bg-red-500 z-10"><i class="fa-solid fa-xmark"></i></button>
                     
                     <div class="w-full aspect-square bg-[#FAF7F2] rounded-xl overflow-hidden mb-2 border-2 border-dashed border-[#E2D3B7] flex items-center justify-center relative shadow-inner group">
-                        <img v-if="item.image" :src="item.image" class="w-full h-full object-cover object-center transition duration-300 group-hover:scale-105">
+                        <img v-if="item.image" :src="item.image" class="w-full h-full object-cover object-center transition duration-300 group-hover:scale-105" :class="{'opacity-40': item.purchased}">
                         <div v-else class="text-center text-stone-400 p-2 pointer-events-none">
                             <i class="fa-solid fa-camera text-lg mb-0.5 text-orange-300"></i>
                             <div class="text-[9px] font-bold">上傳相片</div>
@@ -363,7 +367,17 @@
                         <input type="file" accept="image/*" @change="triggerCropModal($event, sIdx, 'shopping')" class="absolute inset-0 opacity-0 cursor-pointer">
                     </div>
 
-                    <input type="text" v-model="item.name" @change="updateCloudData" class="w-full text-xs font-bold text-center text-stone-800 bg-stone-50 p-1.5 rounded-lg focus:outline-none" placeholder="輸入商品名稱">
+                    <input type="text" v-model="item.name" @change="updateCloudData" 
+                           class="w-full text-xs font-bold text-center bg-stone-50 p-1.5 rounded-lg focus:outline-none" 
+                           :class="item.purchased ? 'text-stone-500 line-through font-medium' : 'text-stone-800'"
+                           placeholder="輸入商品名稱">
+
+                    <div class="mt-2 pt-1.5 border-t border-stone-100 flex items-center justify-center gap-1.5">
+                        <label class="flex items-center gap-1.5 text-[11px] font-bold cursor-pointer" :class="item.purchased ? 'text-stone-800' : 'text-stone-400'">
+                            <input type="checkbox" v-model="item.purchased" @change="updateCloudData" class="w-4 h-4 rounded text-orange-400 border-stone-300 focus:ring-0 cursor-pointer">
+                            已購入
+                        </label>
+                    </div>
                 </div>
             </div>
             <button @click="addShoppingItem" class="fixed bottom-24 right-6 bg-emerald-400 text-white w-14 h-14 rounded-full flex items-center justify-center z-40 border-4 border-white transform active:scale-95 transition shadow-lg"><i class="fa-solid fa-plus text-xl"></i></button>
@@ -568,10 +582,10 @@
         <div class="bg-white rounded-[32px] w-full max-w-sm p-5 border-4 border-[#E2D3B7] shadow-2xl flex flex-col items-center space-y-4">
             <div class="w-full flex justify-between items-center border-b pb-2 border-stone-100">
                 <h3 class="font-bold text-sm text-stone-800 flex items-center gap-1"><i class="fa-solid fa-scissors text-orange-400"></i> 調整照片適配位置</h3>
-                <span class="text-[10px] text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full font-bold">可單指拖曳對齊</span>
+                <span class="text-[10px] text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full font-bold">可單指拖曳 / 雙指縮放</span>
             </div>
             
-            <div :class="cropModuleType === 'hotel' ? 'w-full h-44' : 'w-64 h-64'" class="bg-stone-100 rounded-2xl overflow-hidden relative border-2 border-[#D1C2A5] shadow-inner crop-area"
+            <div id="cropArea" :class="cropModuleType === 'hotel' ? 'w-full h-44' : 'w-64 h-64'" class="bg-stone-100 rounded-2xl overflow-hidden relative border-2 border-[#D1C2A5] shadow-inner crop-area"
                  @mousedown="startDrag" @mousemove="onDrag" @mouseup="endDrag" @mouseleave="endDrag"
                  @touchstart="startDrag" @touchmove="onDrag" @touchend="endDrag">
                 <img :src="cropSourceUrl" :style="cropImageStyle" class="absolute max-w-none origin-center pointer-events-none">
@@ -645,7 +659,8 @@ createApp({
 
         const dayEvents = ref({...defaultDayEvents});
         const hotels = ref([...defaultHotels]);
-        const shoppingList = ref([{ name: '濟州柑橘巧克力', image: '' }]);
+        // 預設加上 purchased 屬性追蹤購買狀態
+        const shoppingList = ref([{ name: '濟州柑橘巧克力', image: '', purchased: false }]);
         const expenses = ref([{ id: 901, category: '住宿', name: '第一晚別墅預付款', date: '2026-09-14', krw: 126000, twd: 3000, payer: '曾曾', shares: ['曾曾', '小陳', '涵涵', '小恩'], payMethod: '信用卡', note: '' }]);
         const luggageItems = ref([
             { id: 501, category: '隨身背包', name: '護照、台灣駕照與國際駕照', qty: 1, checked: true }
@@ -660,6 +675,7 @@ createApp({
         const expenseModalOpen = ref(false);
         const formExpense = ref({ category: '飲食', name: '', date: '', krw: null, twd: null, payer: '曾曾', shares: ['曾曾', '小陳', '涵涵', '小恩'], payMethod: '現金' });
 
+        // 裁切模組響應式狀態
         const cropModalOpen = ref(false);
         const cropSourceUrl = ref('');
         const cropTargetIndex = ref(null);
@@ -668,6 +684,7 @@ createApp({
         const cropOffset = ref({ x: 0, y: 0 });
         const isDragging = ref(false);
         const startMousePos = ref({ x: 0, y: 0 });
+        const startTouchDist = ref(0); // 雙指初始距離紀錄
 
         const currentDayEvents = computed(() => dayEvents.value[selectedDayIndex.value] || []);
         const sortedExpenses = computed(() => [...expenses.value].sort((a, b) => new Date(b.date) - new Date(a.date)));
@@ -770,8 +787,6 @@ createApp({
             }
         };
 
-        // 修正處：移除原本不限制體積、無法儲存的 uploadHotelImage 函式
-
         const triggerCropModal = (e, targetIdx, type = 'shopping') => {
             const file = e.target.files[0];
             if (file) {
@@ -780,7 +795,7 @@ createApp({
                     cropSourceUrl.value = event.target.result;
                     cropTargetIndex.value = targetIdx;
                     cropModuleType.value = type;
-                    cropScale.value = 1.2;
+                    cropScale.value = 1.0;
                     cropOffset.value = { x: 0, y: 0 };
                     cropModalOpen.value = true;
                 };
@@ -789,75 +804,93 @@ createApp({
             }
         };
 
-        const startDrag = (e) => {
-            isDragging.value = true;
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            startMousePos.value = { x: clientX - cropOffset.value.x, y: clientY - cropOffset.value.y };
-        };
-        const onDrag = (e) => {
-            if (!isDragging.value) return;
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            cropOffset.value = { x: clientX - startMousePos.value.x, y: clientY - startMousePos.value.y };
-        };
-        const endDrag = () => { isDragging.value = false; };
-        const changeScale = (val) => {
-            cropScale.value = Math.max(0.5, Math.min(4.0, cropScale.value + val));
+        const getTouchDistance = (touches) => {
+            const dx = touches[0].clientX - touches[1].clientX;
+            const dy = touches[0].clientY - touches[1].clientY;
+            return Math.sqrt(dx * dx + dy * dy);
         };
 
-        // 修正處：讓裁切邏輯相容飯店卡片的長方形尺寸（寬400、高220）與一般正方形（400x400）
+        const startDrag = (e) => {
+            if (e.touches && e.touches.length === 2) {
+                isDragging.value = false;
+                startTouchDist.value = getTouchDistance(e.touches);
+            } else {
+                isDragging.value = true;
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                startMousePos.value = { x: clientX - cropOffset.value.x, y: clientY - cropOffset.value.y };
+            }
+        };
+
+        const onDrag = (e) => {
+            if (e.touches && e.touches.length === 2) {
+                const currentDist = getTouchDistance(e.touches);
+                const factor = currentDist / startTouchDist.value;
+                cropScale.value = Math.max(0.3, Math.min(5.0, cropScale.value * factor));
+                startTouchDist.value = currentDist;
+            } else {
+                if (!isDragging.value) return;
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                cropOffset.value = { x: clientX - startMousePos.value.x, y: clientY - startMousePos.value.y };
+            }
+        };
+
+        const endDrag = () => { 
+            isDragging.value = false; 
+        };
+
+        const changeScale = (val) => {
+            cropScale.value = Math.max(0.3, Math.min(5.0, cropScale.value + val));
+        };
+
         const executeCrop = () => {
             const img = new Image();
             img.src = cropSourceUrl.value;
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                
-                // 依據模組種類動態設定裁切畫布尺寸 (飯店適合長方形)
+                const cropAreaEl = document.getElementById('cropArea');
+                const displayWidth = cropAreaEl ? cropAreaEl.clientWidth : 256;
+                const displayHeight = cropAreaEl ? cropAreaEl.clientHeight : 256;
+
                 if (cropModuleType.value === 'hotel') {
-                    canvas.width = 400;
-                    canvas.height = 220; 
+                    canvas.width = 600;
+                    canvas.height = 330;
                 } else {
-                    canvas.width = 400;
-                    canvas.height = 400;
+                    canvas.width = 500;
+                    canvas.height = 500;
                 }
                 
                 const ctx = canvas.getContext('2d');
-                const displayWidth = 256; 
-                const displayHeight = cropModuleType.value === 'hotel' ? 140 : 256;
-                
                 let renderW, renderH;
                 const imgRatio = img.width / img.height;
-                if (imgRatio > (displayWidth / displayHeight)) {
-                    renderH = displayHeight;
-                    renderW = displayHeight * imgRatio;
-                } else {
+                const areaRatio = displayWidth / displayHeight;
+                if (imgRatio > areaRatio) {
                     renderW = displayWidth;
                     renderH = displayWidth / imgRatio;
+                } else {
+                    renderH = displayHeight;
+                    renderW = displayHeight * imgRatio;
                 }
 
-                const finalScale = cropScale.value * (renderW / img.width);
-                const centerX = canvas.width / 2;
-                const centerY = canvas.height / 2;
+                const finalScale = cropScale.value * (renderW / img.width) * (canvas.width / displayWidth);
+                const canvasOffsetX = cropOffset.value.x * (canvas.width / displayWidth);
+                const canvasOffsetY = cropOffset.value.y * (canvas.height / displayHeight);
 
                 ctx.fillStyle = '#FFFFFF';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 
-                ctx.translate(centerX, centerY);
-                ctx.translate(cropOffset.value.x * (canvas.width/displayWidth), cropOffset.value.y * (canvas.height/displayHeight));
+                ctx.translate(canvas.width / 2 + canvasOffsetX, canvas.height / 2 + canvasOffsetY);
                 ctx.scale(finalScale, finalScale);
-                
                 ctx.drawImage(img, -img.width / 2, -img.height / 2);
 
-                // 壓縮為 JPEG，維持小體積
-                const finalBase64 = canvas.toDataURL('image/jpeg', 0.82);
+                const finalBase64 = canvas.toDataURL('image/jpeg', 0.85);
 
-                // 依據上傳來源寫入正確的資料結構
                 if (cropModuleType.value === 'schedule') {
                     formEvent.value.image = finalBase64;
                 } else if (cropModuleType.value === 'hotel') {
                     hotels.value[cropTargetIndex.value].img = finalBase64;
-                    updateCloudData(); // 立即同步至 Firestore 雲端
+                    updateCloudData(); 
                 } else {
                     shoppingList.value[cropTargetIndex.value].image = finalBase64;
                     updateCloudData();
@@ -866,7 +899,8 @@ createApp({
             };
         };
 
-        const addShoppingItem = () => { shoppingList.value.push({ name: '', image: '' }); updateCloudData(); };
+        // 新增購物項目時預設加上 purchased 狀態
+        const addShoppingItem = () => { shoppingList.value.push({ name: '', image: '', purchased: false }); updateCloudData(); };
         const deleteShoppingItem = (idx) => { shoppingList.value.splice(idx, 1); updateCloudData(); };
 
         const openExpenseModal = () => { formExpense.value = { category: '飲食', name: '', date: new Date().toISOString().split('T')[0], krw: null, twd: null, payer: '曾曾', shares: ['曾曾', '小陳', '涵涵', '小恩'], payMethod: '現金' }; expenseModalOpen.value = true; };
@@ -887,7 +921,7 @@ createApp({
         const deleteLuggageItem = (id) => { luggageItems.value = luggageItems.value.filter(l => l.id !== id); updateCloudData(); };
 
         const getCategoryEmoji = (cat) => { return { '景點': '🍊', '住宿': '🏨', '美食': '🍗', '購物': '🛍️', '航班': '✈️', '其他': '✨' }[cat] || '📍'; };
-        const getCategoryBg = (cat) => { return { '景點': 'bg-orange-400', '住宿': 'bg-emerald-400', '美食': 'bg-amber-500', '購物': 'bg-purple-400', '航班': 'bg-sky-400', '其他': 'bg-stone-400' }[cat] || 'bg-stone-400'; };
+        const getCategoryBg = (cat) => { return { '景點': 'bg-orange-400', '住宿': 'bg-emerald-400', '美食': 'bg-amber-500', '購物': 'bg-purple-400', '航班': 'bg-sky-400', 'other': 'bg-stone-400' }[cat] || 'bg-stone-400'; };
         const formatNumber = (num) => Math.round(num).toLocaleString();
 
         onMounted(() => {

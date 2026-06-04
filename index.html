@@ -105,17 +105,24 @@
                 </button>
             </div>
 
-            <div class="bg-gradient-to-br from-sky-400 to-blue-500 text-white p-4 rounded-2xl shadow-sm flex items-center justify-between border border-sky-300/30">
-                <div class="flex items-center gap-3.5">
-                    <div class="text-4xl drop-shadow-md">🌤️</div>
+            <div class="bg-[#F9F5EB] text-stone-700 p-4 rounded-2xl shadow-sm flex items-center justify-between border-2 border-[#E6DCC3] relative overflow-hidden">
+                <div class="absolute -right-2 -bottom-2 text-stone-300/20 text-6xl pointer-events-none select-none">🗿</div>
+                <div class="flex items-center gap-3.5 relative z-10">
+                    <div class="text-3xl drop-shadow-sm flex flex-col items-center">
+                        <span>🌤️</span>
+                        <span class="text-[10px] mt-0.5">🌊⚓</span>
+                    </div>
                     <div>
-                        <div class="font-bold text-sm tracking-wide">濟州島</div>
-                        <div class="text-[11px] text-sky-100/90 mt-0.5 font-medium">晴時多雲 · 共同編輯中</div>
+                        <div class="font-bold text-sm tracking-wide text-stone-800 flex items-center gap-1">
+                            <span>濟州島</span>
+                            <span class="text-xs font-normal text-stone-500">🗿 石頭爺爺守護中</span>
+                        </div>
+                        <div class="text-[11px] text-amber-800/80 mt-0.5 font-medium">晴時多雲 · 湛藍海邊景緻</div>
                     </div>
                 </div>
-                <div class="text-right">
-                    <div class="text-2xl font-bold tracking-tighter">23°C</div>
-                    <div class="text-[10px] text-sky-100/80 font-medium mt-0.5">體感溫度 21.5°C</div>
+                <div class="text-right relative z-10">
+                    <div class="text-2xl font-bold tracking-tighter text-amber-900">23°C</div>
+                    <div class="text-[10px] text-stone-500 font-medium mt-0.5">體感溫度 21.5°C</div>
                 </div>
             </div>
 
@@ -353,34 +360,41 @@
             </div>
         </div>
 
-        <div v-if="currentTab === 'shopping'" class="space-y-4">
-            <div class="grid grid-cols-2 gap-3">
-                <div v-for="(item, sIdx) in shoppingList" :key="sIdx" class="handbook-card p-3 relative flex flex-col justify-between bg-white">
-                    <button @click="deleteShoppingItem(sIdx)" class="absolute top-2 right-2 w-5 h-5 bg-stone-300 text-white rounded-full flex items-center justify-center text-[10px] cursor-pointer hover:bg-red-500 z-10"><i class="fa-solid fa-xmark"></i></button>
-                    
-                    <div class="w-full aspect-square bg-[#FAF7F2] rounded-xl overflow-hidden mb-2 border-2 border-dashed border-[#E2D3B7] flex items-center justify-center relative shadow-inner group">
-                        <img v-if="item.image" :src="item.image" class="w-full h-full object-cover object-center transition duration-300 group-hover:scale-105" :class="{'opacity-40': item.purchased}">
-                        <div v-else class="text-center text-stone-400 p-2 pointer-events-none">
-                            <i class="fa-solid fa-camera text-lg mb-0.5 text-orange-300"></i>
-                            <div class="text-[9px] font-bold">上傳相片</div>
-                        </div>
-                        <input type="file" accept="image/*" @change="triggerCropModal($event, sIdx, 'shopping')" class="absolute inset-0 opacity-0 cursor-pointer">
+        <div v-if="currentTab === 'shopping'" class="space-y-3">
+            <div v-for="(item, sIdx) in shoppingList" :key="sIdx" class="handbook-card p-3.5 relative bg-white flex items-center gap-4 transition-all duration-300">
+                
+                <button @click="deleteShoppingItem(sIdx)" class="absolute top-2 right-2 w-5 h-5 bg-stone-200 text-stone-500 rounded-full flex items-center justify-center text-[10px] cursor-pointer hover:bg-red-500 hover:text-white z-10 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                
+                <div class="w-20 h-20 bg-[#FAF7F2] rounded-xl overflow-hidden border-2 border-dashed border-[#E2D3B7] flex items-center justify-center relative shadow-inner group flex-shrink-0">
+                    <img v-if="item.image" :src="item.image" class="w-full h-full object-cover object-center transition duration-300 group-hover:scale-105">
+                    <div v-else class="text-center text-stone-400 p-1 pointer-events-none">
+                        <i class="fa-solid fa-camera text-base mb-0.5 text-orange-300"></i>
+                        <div class="text-[9px] font-bold">上傳照片</div>
                     </div>
+                    <input type="file" accept="image/*" @change="triggerCropModal($event, sIdx, 'shopping')" class="absolute inset-0 opacity-0 cursor-pointer">
+                </div>
 
+                <div class="flex-1 flex flex-col justify-between h-20 pr-4">
                     <input type="text" v-model="item.name" @change="updateCloudData" 
-                           class="w-full text-xs font-bold text-center bg-stone-50 p-1.5 rounded-lg focus:outline-none" 
-                           :class="item.purchased ? 'text-stone-500 line-through font-medium' : 'text-stone-800'"
-                           placeholder="輸入商品名稱">
+                           class="w-full text-sm font-bold bg-stone-50/60 p-1.5 rounded-lg focus:outline-none border border-transparent focus:border-orange-200 text-stone-800"
+                           placeholder="🍊 輸入想要採購的商品...">
 
-                    <div class="mt-2 pt-1.5 border-t border-stone-100 flex items-center justify-center gap-1.5">
-                        <label class="flex items-center gap-1.5 text-[11px] font-bold cursor-pointer" :class="item.purchased ? 'text-stone-800' : 'text-stone-400'">
-                            <input type="checkbox" v-model="item.purchased" @change="updateCloudData" class="w-4 h-4 rounded text-orange-400 border-stone-300 focus:ring-0 cursor-pointer">
-                            已購入
+                    <div class="flex items-center justify-start mt-1">
+                        <label class="flex items-center gap-2 text-[11px] font-bold cursor-pointer select-none px-3 py-1 rounded-full transition-all duration-300"
+                               :class="item.purchased ? 'bg-stone-900 text-stone-300 line-through decoration-orange-400 decoration-2 shadow-inner' : 'bg-orange-50 text-orange-700 border border-orange-200'">
+                            <input type="checkbox" v-model="item.purchased" @change="updateCloudData" 
+                                   class="w-3.5 h-3.5 rounded text-orange-500 border-stone-300 focus:ring-0 cursor-pointer accent-orange-400">
+                            <span>已購入</span>
                         </label>
                     </div>
                 </div>
             </div>
-            <button @click="addShoppingItem" class="fixed bottom-24 right-6 bg-emerald-400 text-white w-14 h-14 rounded-full flex items-center justify-center z-40 border-4 border-white transform active:scale-95 transition shadow-lg"><i class="fa-solid fa-plus text-xl"></i></button>
+            
+            <button @click="addShoppingItem" class="fixed bottom-24 right-6 bg-emerald-400 text-white w-14 h-14 rounded-full flex items-center justify-center z-40 border-4 border-white transform active:scale-95 transition shadow-lg">
+                <i class="fa-solid fa-plus text-xl"></i>
+            </button>
         </div>
 
         <div v-if="currentTab === 'expenses'" class="space-y-4">
@@ -659,7 +673,6 @@ createApp({
 
         const dayEvents = ref({...defaultDayEvents});
         const hotels = ref([...defaultHotels]);
-        // 預設加上 purchased 屬性追蹤購買狀態
         const shoppingList = ref([{ name: '濟州柑橘巧克力', image: '', purchased: false }]);
         const expenses = ref([{ id: 901, category: '住宿', name: '第一晚別墅預付款', date: '2026-09-14', krw: 126000, twd: 3000, payer: '曾曾', shares: ['曾曾', '小陳', '涵涵', '小恩'], payMethod: '信用卡', note: '' }]);
         const luggageItems = ref([
@@ -675,7 +688,6 @@ createApp({
         const expenseModalOpen = ref(false);
         const formExpense = ref({ category: '飲食', name: '', date: '', krw: null, twd: null, payer: '曾曾', shares: ['曾曾', '小陳', '涵涵', '小恩'], payMethod: '現金' });
 
-        // 裁切模組響應式狀態
         const cropModalOpen = ref(false);
         const cropSourceUrl = ref('');
         const cropTargetIndex = ref(null);
@@ -684,7 +696,7 @@ createApp({
         const cropOffset = ref({ x: 0, y: 0 });
         const isDragging = ref(false);
         const startMousePos = ref({ x: 0, y: 0 });
-        const startTouchDist = ref(0); // 雙指初始距離紀錄
+        const startTouchDist = ref(0); 
 
         const currentDayEvents = computed(() => dayEvents.value[selectedDayIndex.value] || []);
         const sortedExpenses = computed(() => [...expenses.value].sort((a, b) => new Date(b.date) - new Date(a.date)));
@@ -899,7 +911,6 @@ createApp({
             };
         };
 
-        // 新增購物項目時預設加上 purchased 狀態
         const addShoppingItem = () => { shoppingList.value.push({ name: '', image: '', purchased: false }); updateCloudData(); };
         const deleteShoppingItem = (idx) => { shoppingList.value.splice(idx, 1); updateCloudData(); };
 

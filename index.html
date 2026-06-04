@@ -356,6 +356,21 @@
                 </div>
             </div>
         </div>
+        
+        
+        <!-- (5) 固定維護快捷撥號：緊急醫療救援資訊 -->
+            <div class="handbook-card p-3 bg-red-50/90 border-red-200">
+                <div class="text-xs font-bold text-red-800 mb-1.5 flex items-center gap-1">
+                    <i class="fa-solid fa-star-of-life text-red-500 animate-pulse"></i> 🚨 濟州島緊急醫療與救援快捷撥號
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-center text-[11px] font-bold">
+                    <a href="tel:112" class="bg-white p-1.5 rounded-lg border border-red-100 block hover:bg-red-100">警察局: <span class="text-red-600">112</span></a>
+                    <a href="tel:119" class="bg-white p-1.5 rounded-lg border border-red-100 block hover:bg-red-100">救護/消防: <span class="text-red-600">119</span></a>
+                    <a href="tel:1330" class="bg-white p-1.5 rounded-lg border border-red-100 block hover:bg-red-100">觀光諮詢: <span class="text-emerald-700">1330</span></a>
+                </div>
+            </div>
+
+
 
         <!-- ================= TAB 3: 必買購物清單 ( Basket ) ================= -->
         <div v-if="currentTab === 'shopping'" class="space-y-4">
@@ -429,17 +444,6 @@
             <button @click="openExpenseModal" class="fixed bottom-24 right-6 bg-emerald-400 text-white w-14 h-14 rounded-full flex items-center justify-center z-40 border-4 border-white transform active:scale-95 transition shadow-lg"><i class="fa-solid fa-plus text-xl"></i></button>
         </div>
 
-<!-- (5) 固定維護快捷撥號：緊急醫療救援資訊 -->
-            <div class="handbook-card p-3 bg-red-50/90 border-red-200">
-                <div class="text-xs font-bold text-red-800 mb-1.5 flex items-center gap-1">
-                    <i class="fa-solid fa-star-of-life text-red-500 animate-pulse"></i> 🚨 濟州島緊急醫療與救援快捷撥號
-                </div>
-                <div class="grid grid-cols-3 gap-2 text-center text-[11px] font-bold">
-                    <a href="tel:112" class="bg-white p-1.5 rounded-lg border border-red-100 block hover:bg-red-100">警察局: <span class="text-red-600">112</span></a>
-                    <a href="tel:119" class="bg-white p-1.5 rounded-lg border border-red-100 block hover:bg-red-100">救護/消防: <span class="text-red-600">119</span></a>
-                    <a href="tel:1330" class="bg-white p-1.5 rounded-lg border border-red-100 block hover:bg-red-100">觀光諮詢: <span class="text-emerald-700">1330</span></a>
-                </div>
-            </div>
             
         <!-- ================= TAB 5: 行李檢查與規範 (🧳 行李清單) ================= -->
         <div v-if="currentTab === 'luggage'" class="space-y-4">

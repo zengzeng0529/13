@@ -288,7 +288,7 @@
                             <i class="fa-solid fa-image text-2xl mb-1 text-orange-300"></i>
                             <div class="text-[11px]">上傳飯店精選精美大圖 📸</div>
                         </div>
-                        <input type="file" @change="uploadHotelImage($event, hIdx)" class="absolute inset-0 opacity-0 cursor-pointer">
+                        <input type="file" accept="image/*" @change="triggerCropModal($event, hIdx, 'hotel')" class="absolute inset-0 opacity-0 cursor-pointer">
                     </div>
 
                     <div class="grid grid-cols-2 gap-2 text-xs">
@@ -571,7 +571,7 @@
                 <span class="text-[10px] text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full font-bold">可單指拖曳對齊</span>
             </div>
             
-            <div class="w-64 h-64 bg-stone-100 rounded-2xl overflow-hidden relative border-2 border-[#D1C2A5] shadow-inner crop-area"
+            <div :class="cropModuleType === 'hotel' ? 'w-full h-44' : 'w-64 h-64'" class="bg-stone-100 rounded-2xl overflow-hidden relative border-2 border-[#D1C2A5] shadow-inner crop-area"
                  @mousedown="startDrag" @mousemove="onDrag" @mouseup="endDrag" @mouseleave="endDrag"
                  @touchstart="startDrag" @touchmove="onDrag" @touchend="endDrag">
                 <img :src="cropSourceUrl" :style="cropImageStyle" class="absolute max-w-none origin-center pointer-events-none">
@@ -635,7 +635,6 @@ createApp({
             ], 2: [], 3: [], 4: [], 5: []
         };
 
-        // 住宿資料庫結構補全 (加入 note 欄位預設值)
         const defaultHotels = [
             { name: '濟州海景溫馨別墅 (Day 1)', orderId: 'LT-91401', checkIn: '9/14 15:00', checkOut: '9/15 11:00', phone: '+82-64-111-1111', address: '26 Eomjang-ro, Jeju-si, Jeju-do', img: '', note: '海景大雙人房，不含早' },
             { name: '西歸浦舒適手帳旅宿 (Day 2)', orderId: 'LT-91502', checkIn: '9/15 15:00', checkOut: '9/16 11:00', phone: '+82-64-222-2222', address: '濟州特別自治道西歸浦市', img: '', note: '' },
@@ -771,7 +770,7 @@ createApp({
             }
         };
 
-        const uploadHotelImage = (e, hIdx) => { const f = e.target.files[0]; if (f) { const r = new FileReader(); r.onload = (ev) => { hotels.value[hIdx].img = ev.target.result; updateCloudData(); }; r.readAsDataURL(f); } };
+        // 修正處：移除原本不限制體積、無法儲存的 uploadHotelImage 函式
 
         const triggerCropModal = (e, targetIdx, type = 'shopping') => {
             const file = e.target.files[0];
@@ -807,21 +806,29 @@ createApp({
             cropScale.value = Math.max(0.5, Math.min(4.0, cropScale.value + val));
         };
 
+        // 修正處：讓裁切邏輯相容飯店卡片的長方形尺寸（寬400、高220）與一般正方形（400x400）
         const executeCrop = () => {
             const img = new Image();
             img.src = cropSourceUrl.value;
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                canvas.width = 400;
-                canvas.height = 400;
+                
+                // 依據模組種類動態設定裁切畫布尺寸 (飯店適合長方形)
+                if (cropModuleType.value === 'hotel') {
+                    canvas.width = 400;
+                    canvas.height = 220; 
+                } else {
+                    canvas.width = 400;
+                    canvas.height = 400;
+                }
+                
                 const ctx = canvas.getContext('2d');
-
                 const displayWidth = 256; 
-                const displayHeight = 256;
+                const displayHeight = cropModuleType.value === 'hotel' ? 140 : 256;
                 
                 let renderW, renderH;
                 const imgRatio = img.width / img.height;
-                if (imgRatio > 1) {
+                if (imgRatio > (displayWidth / displayHeight)) {
                     renderH = displayHeight;
                     renderW = displayHeight * imgRatio;
                 } else {
@@ -837,15 +844,20 @@ createApp({
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 
                 ctx.translate(centerX, centerY);
-                ctx.translate(cropOffset.value.x * (400/256), cropOffset.value.y * (400/256));
+                ctx.translate(cropOffset.value.x * (canvas.width/displayWidth), cropOffset.value.y * (canvas.height/displayHeight));
                 ctx.scale(finalScale, finalScale);
                 
                 ctx.drawImage(img, -img.width / 2, -img.height / 2);
 
+                // 壓縮為 JPEG，維持小體積
                 const finalBase64 = canvas.toDataURL('image/jpeg', 0.82);
 
+                // 依據上傳來源寫入正確的資料結構
                 if (cropModuleType.value === 'schedule') {
                     formEvent.value.image = finalBase64;
+                } else if (cropModuleType.value === 'hotel') {
+                    hotels.value[cropTargetIndex.value].img = finalBase64;
+                    updateCloudData(); // 立即同步至 Firestore 雲端
                 } else {
                     shoppingList.value[cropTargetIndex.value].image = finalBase64;
                     updateCloudData();
@@ -902,12 +914,12 @@ createApp({
             calcKrw, calcTwd, modalOpen, isEditMode, formEvent, expenseModalOpen, formExpense, currentDayEvents,
             sortedExpenses, totalTwd, totalKrw, computedSettlements, settlementDone, editingIdx,
             openAddModal, openEditModal, saveEvent, confirmDeleteEvent, moveEvent,
-            uploadHotelImage, addShoppingItem, deleteShoppingItem,
+            addShoppingItem, deleteShoppingItem,
             openExpenseModal, saveExpenseItem, deleteExpenseItem, convertCurrency, syncExpenseCurrency,
             getLuggageByCategory, addLuggageItem, deleteLuggageItem, getCategoryEmoji, getCategoryBg, formatNumber,
             updateCloudData, toggleSettlementPaid, copyShareLink,
             
-            cropModalOpen, cropSourceUrl, cropScale, cropImageStyle, isDragging,
+            cropModalOpen, cropSourceUrl, cropScale, cropImageStyle, isDragging, cropModuleType, cropTargetIndex,
             triggerCropModal, startDrag, onDrag, endDrag, changeScale, executeCrop
         };
     }

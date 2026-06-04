@@ -65,7 +65,6 @@
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* 裁切視窗拖曳平滑度防干擾 */
         .crop-area {
             touch-action: none;
             user-select: none;
@@ -186,8 +185,8 @@
                                 <h4 class="font-bold text-sm text-stone-900 mt-1 truncate">{{ event.name }}</h4>
                                 
                                 <div class="flex flex-wrap gap-x-2.5 mt-1 text-[11px] text-stone-500">
-                                    <span v-if="event.hours"><i class="fa-regular fa-calendar-check"></i> {{ event.hours }}</span>
-                                    <span v-if="event.ticket" class="text-emerald-600 font-bold"><i class="fa-solid fa-ticket"></i> {{ event.ticket }}</span>
+                                    <span v-if="event.hours && ['景點','住宿','美食','購物'].includes(event.category)"><i class="fa-regular fa-clock text-amber-500"></i> {{ event.hours }}</span>
+                                    <span v-if="event.ticket && event.category === '景點'" class="text-emerald-600 font-bold"><i class="fa-solid fa-ticket"></i> {{ event.ticket }}</span>
                                 </div>
                             </div>
                         </div>
@@ -361,7 +360,7 @@
                             <i class="fa-solid fa-camera text-lg mb-0.5 text-orange-300"></i>
                             <div class="text-[9px] font-bold">上傳相片</div>
                         </div>
-                        <input type="file" accept="image/*" @change="triggerCropModal($event, sIdx)" class="absolute inset-0 opacity-0 cursor-pointer">
+                        <input type="file" accept="image/*" @change="triggerCropModal($event, sIdx, 'shopping')" class="absolute inset-0 opacity-0 cursor-pointer">
                     </div>
 
                     <input type="text" v-model="item.name" @change="updateCloudData" class="w-full text-xs font-bold text-center text-stone-800 bg-stone-50 p-1.5 rounded-lg focus:outline-none" placeholder="輸入商品名稱">
@@ -420,7 +419,6 @@
             <button @click="openExpenseModal" class="fixed bottom-24 right-6 bg-emerald-400 text-white w-14 h-14 rounded-full flex items-center justify-center z-40 border-4 border-white transform active:scale-95 transition shadow-lg"><i class="fa-solid fa-plus text-xl"></i></button>
         </div>
 
-            
         <div v-if="currentTab === 'luggage'" class="space-y-4">
             <div class="handbook-card p-4 bg-orange-50/90 border-orange-300 pt-6">
                 <div class="washi-tape bg-red-500 text-white">⚠️ KOREA REGULATION</div>
@@ -490,17 +488,28 @@
                     </select>
                 </div>
                 <div><label class="block font-bold text-stone-500">名稱</label><input type="text" v-model="formEvent.name" class="w-full bg-[#FAF7F2] border-2 border-[#E2D3B7] p-2 rounded-xl font-bold focus:outline-none"></div>
-                <div><label class="block font-bold text-stone-500">時間</label><input type="time" v-model="formEvent.time" class="w-full bg-[#FAF7F2] border-2 border-[#E2D3B7] p-2 rounded-xl font-bold focus:outline-none"></div>
+                <div><label class="block font-bold text-stone-500">抵達時間 (24小時滾輪)</label><input type="time" v-model="formEvent.time" class="w-full bg-[#FAF7F2] border-2 border-[#E2D3B7] p-2 rounded-xl font-bold focus:outline-none"></div>
+                
+                <div v-if="['景點','住宿','美食','購物'].includes(formEvent.category)">
+                    <label class="block font-bold text-stone-500">營業時間</label>
+                    <input type="text" v-model="formEvent.hours" placeholder="例如: 11:30 - 22:00" class="w-full bg-[#FAF7F2] border-2 border-[#E2D3B7] p-2 rounded-xl font-bold focus:outline-none">
+                </div>
+                
+                <div v-if="formEvent.category === '景點'">
+                    <label class="block font-bold text-stone-500">門票資訊</label>
+                    <input type="text" v-model="formEvent.ticket" placeholder="例如: 免費 / ₩29,500" class="w-full bg-[#FAF7F2] border-2 border-[#E2D3B7] p-2 rounded-xl font-bold focus:outline-none">
+                </div>
+
                 <div><label class="block font-bold text-stone-500">特色 & 備註</label><textarea v-model="formEvent.note" rows="2" class="w-full bg-[#FAF7F2] border-2 border-[#E2D3B7] p-2 rounded-xl focus:outline-none"></textarea></div>
-                <div><label class="block font-bold text-stone-500">上傳圖片</label>
+                <div><label class="block font-bold text-stone-500">上傳卡片圖片</label>
                     <div class="relative bg-[#FAF7F2] border-2 border-dashed border-[#E2D3B7] rounded-xl p-2.5 text-center text-stone-400 cursor-pointer">
-                        <span v-if="formEvent.image" class="text-emerald-600 font-bold">📸 相片載入成功</span><span v-else>📸 點擊選擇上傳實景照</span>
-                        <input type="file" @change="uploadEventImage" class="absolute inset-0 opacity-0 cursor-pointer">
+                        <span v-if="formEvent.image" class="text-emerald-600 font-bold">📸 卡片相片載入成功</span><span v-else>📸 點擊拍照或上傳裁剪</span>
+                        <input type="file" accept="image/*" @change="triggerCropModal($event, editingIdx, 'schedule')" class="absolute inset-0 opacity-0 cursor-pointer">
                     </div>
                 </div>
             </div>
             <div class="flex gap-2 pt-2">
-                <button v-if="isEditMode" @click="confirmDeleteEvent" class="bg-red-500 text-white font-bold py-2 px-3 rounded-xl">刪除</button>
+                <button v-if="isEditMode" @click="confirmDeleteEvent" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-3 rounded-xl transition">刪除</button>
                 <button @click="modalOpen = false" class="bg-stone-100 text-stone-600 font-bold py-2 px-3 rounded-xl flex-1">取消</button>
                 <button @click="saveEvent" class="bg-emerald-400 text-white font-bold py-2 px-3 rounded-xl flex-1">儲存行程</button>
             </div>
@@ -558,7 +567,7 @@
     <div v-if="cropModalOpen" class="fixed inset-0 bg-stone-900/80 z-50 flex items-center justify-center p-4 backdrop-blur-md">
         <div class="bg-white rounded-[32px] w-full max-w-sm p-5 border-4 border-[#E2D3B7] shadow-2xl flex flex-col items-center space-y-4">
             <div class="w-full flex justify-between items-center border-b pb-2 border-stone-100">
-                <h3 class="font-bold text-sm text-stone-800 flex items-center gap-1"><i class="fa-solid fa-scissors text-orange-400"></i> 調整商品相片位置</h3>
+                <h3 class="font-bold text-sm text-stone-800 flex items-center gap-1"><i class="fa-solid fa-scissors text-orange-400"></i> 調整照片適配位置</h3>
                 <span class="text-[10px] text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full font-bold">可單指拖曳對齊</span>
             </div>
             
@@ -646,15 +655,16 @@ createApp({
         const modalOpen = ref(false);
         const isEditMode = ref(false);
         const editingIdx = ref(null);
-        const formEvent = ref({ category: '景點', name: '', time: '12:00', note: '', image: '', transitMode: 'drive', transitTime: '15分鐘' });
+        const formEvent = ref({ category: '景點', name: '', time: '12:00', note: '', image: '', transitMode: 'drive', transitTime: '15分鐘', hours: '', ticket: '' });
 
         const expenseModalOpen = ref(false);
         const formExpense = ref({ category: '飲食', name: '', date: '', krw: null, twd: null, payer: '曾曾', shares: ['曾曾', '小陳', '涵涵', '小恩'], payMethod: '現金' });
 
-        // ✂️ 裁切彈窗相關變數狀態
+        // ✂️ 裁切彈窗變數
         const cropModalOpen = ref(false);
         const cropSourceUrl = ref('');
         const cropTargetIndex = ref(null);
+        const cropModuleType = ref('shopping'); // 標記是 'shopping' 還是 'schedule'
         const cropScale = ref(1.0);
         const cropOffset = ref({ x: 0, y: 0 });
         const isDragging = ref(false);
@@ -665,7 +675,6 @@ createApp({
         const totalTwd = computed(() => expenses.value.reduce((sum, e) => sum + Number(e.twd || 0), 0));
         const totalKrw = computed(() => expenses.value.reduce((sum, e) => sum + Number(e.krw || 0), 0));
 
-        // 動態計算圖片在裁切視窗內的縮放平移樣式
         const cropImageStyle = computed(() => {
             return {
                 width: '100%',
@@ -719,7 +728,7 @@ createApp({
                 expenses: expenses.value,
                 luggageItems: luggageItems.value,
                 cloudPaidSettlements: cloudPaidSettlements.value
-            }, { merge: true }).catch(err => console.error("雲端儲存失敗:", err));
+            }, { merge: true }).catch(err => console.error("雲端儲育失敗:", err));
         };
 
         const toggleSettlementPaid = (idx) => {
@@ -735,7 +744,7 @@ createApp({
             });
         };
 
-        const openAddModal = () => { isEditMode.value = false; formEvent.value = { category: '景點', name: '', time: '12:00', note: '', image: '', transitMode: 'drive', transitTime: '15分鐘' }; modalOpen.value = true; };
+        const openAddModal = () => { isEditMode.value = false; formEvent.value = { category: '景點', name: '', time: '12:00', note: '', image: '', transitMode: 'drive', transitTime: '15分鐘', hours: '', ticket: '' }; modalOpen.value = true; };
         const openEditModal = (ev, idx) => { isEditMode.value = true; editingIdx.value = idx; formEvent.value = { ...ev }; modalOpen.value = true; };
         
         const saveEvent = () => {
@@ -747,7 +756,7 @@ createApp({
         };
 
         const confirmDeleteEvent = () => {
-            if(confirm("確定要刪除這筆行程嗎？")) {
+            if(confirm("🚨 確定要刪除這筆行程項目嗎？此動作將無法復原。")) {
                 dayEvents.value[selectedDayIndex.value].splice(editingIdx.value, 1);
                 modalOpen.value = false;
                 updateCloudData();
@@ -762,27 +771,26 @@ createApp({
             }
         };
 
-        const uploadEventImage = (e) => { const f = e.target.files[0]; if (f) { const r = new FileReader(); r.onload = (ev) => { formEvent.value.image = ev.target.result; }; r.readAsDataURL(f); } };
         const uploadHotelImage = (e, hIdx) => { const f = e.target.files[0]; if (f) { const r = new FileReader(); r.onload = (ev) => { hotels.value[hIdx].img = ev.target.result; updateCloudData(); }; r.readAsDataURL(f); } };
 
-        // ✂️ 啟動裁切流程彈窗
-        const triggerCropModal = (e, sIdx) => {
+        // ✂️ 啟動萬用裁切流程彈窗 (串接行程上傳與購物上傳)
+        const triggerCropModal = (e, targetIdx, type = 'shopping') => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     cropSourceUrl.value = event.target.result;
-                    cropTargetIndex.value = sIdx;
-                    cropScale.value = 1.2; // 預設放大一點點好移動
+                    cropTargetIndex.value = targetIdx;
+                    cropModuleType.value = type;
+                    cropScale.value = 1.2;
                     cropOffset.value = { x: 0, y: 0 };
                     cropModalOpen.value = true;
                 };
                 reader.readAsDataURL(file);
-                e.target.value = ''; // 清空欄位以便重複觸發同一張
+                e.target.value = '';
             }
         };
 
-        // 裁切手勢與滑鼠拖曳邏輯
         const startDrag = (e) => {
             isDragging.value = true;
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -800,22 +808,18 @@ createApp({
             cropScale.value = Math.max(0.5, Math.min(4.0, cropScale.value + val));
         };
 
-        // Canvas 畫布輸出生成最終裁切圖片
         const executeCrop = () => {
             const img = new Image();
             img.src = cropSourceUrl.value;
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                // 精簡壓縮：商品照使用 400x400 解析度足以清晰又省 Firestore 流量
                 canvas.width = 400;
                 canvas.height = 400;
                 const ctx = canvas.getContext('2d');
 
-                // 計算 HTML 容器對應真實圖檔尺寸的物理比率
                 const displayWidth = 256; 
                 const displayHeight = 256;
                 
-                // 計算等比縮放值
                 let renderW, renderH;
                 const imgRatio = img.width / img.height;
                 if (imgRatio > 1) {
@@ -826,7 +830,6 @@ createApp({
                     renderH = displayWidth / imgRatio;
                 }
 
-                // 套用使用者在畫面上滑動縮放的各項參數
                 const finalScale = cropScale.value * (renderW / img.width);
                 const centerX = canvas.width / 2;
                 const centerY = canvas.height / 2;
@@ -838,13 +841,20 @@ createApp({
                 ctx.translate(cropOffset.value.x * (400/256), cropOffset.value.y * (400/256));
                 ctx.scale(finalScale, finalScale);
                 
-                // 置中繪製
                 ctx.drawImage(img, -img.width / 2, -img.height / 2);
 
-                // 轉出為 Base64 寫入 Firebase
-                shoppingList.value[cropTargetIndex.value].image = canvas.toDataURL('image/jpeg', 0.85);
+                const finalBase64 = canvas.toDataURL('image/jpeg', 0.82);
+
+                if (cropModuleType.value === 'schedule') {
+                    // 賦值給當前行程編輯視窗緩衝區
+                    formEvent.value.image = finalBase64;
+                } else {
+                    // 賦值給購物清單對應元素
+                    shoppingList.value[cropTargetIndex.value].image = finalBase64;
+                    updateCloudData();
+                }
+                
                 cropModalOpen.value = false;
-                updateCloudData();
             };
         };
 
@@ -887,21 +897,21 @@ createApp({
                     updateCloudData();
                 }
             }, (error) => {
-                console.error("讀取雲端即時同步失敗，請檢查規則權限：", error);
+                console.error("雲端讀取資料失敗，請確認 Firebase Rules 規則安全性權限:", error);
             });
         });
 
         return {
             currentTab, tripTitle, selectedDayIndex, days, dayEvents, hotels, shoppingList, expenses, luggageItems,
             calcKrw, calcTwd, modalOpen, isEditMode, formEvent, expenseModalOpen, formExpense, currentDayEvents,
-            sortedExpenses, totalTwd, totalKrw, computedSettlements, settlementDone,
+            sortedExpenses, totalTwd, totalKrw, computedSettlements, settlementDone, editingIdx,
             openAddModal, openEditModal, saveEvent, confirmDeleteEvent, moveEvent,
-            uploadEventImage, uploadHotelImage, addShoppingItem, deleteShoppingItem,
+            uploadHotelImage, addShoppingItem, deleteShoppingItem,
             openExpenseModal, saveExpenseItem, deleteExpenseItem, convertCurrency, syncExpenseCurrency,
             getLuggageByCategory, addLuggageItem, deleteLuggageItem, getCategoryEmoji, getCategoryBg, formatNumber,
             updateCloudData, toggleSettlementPaid, copyShareLink,
             
-            // 裁切模組回傳
+            // 萬用縮放裁切模組回傳
             cropModalOpen, cropSourceUrl, cropScale, cropImageStyle, isDragging,
             triggerCropModal, startDrag, onDrag, endDrag, changeScale, executeCrop
         };

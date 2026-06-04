@@ -64,6 +64,12 @@
         }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* 裁切視窗拖曳平滑度防干擾 */
+        .crop-area {
+            touch-action: none;
+            user-select: none;
+        }
     </style>
 </head>
 <body class="text-stone-800 antialiased select-none">
@@ -347,15 +353,15 @@
         <div v-if="currentTab === 'shopping'" class="space-y-4">
             <div class="grid grid-cols-2 gap-3">
                 <div v-for="(item, sIdx) in shoppingList" :key="sIdx" class="handbook-card p-3 relative flex flex-col justify-between bg-white">
-                    <button @click="deleteShoppingItem(sIdx)" class="absolute top-2 right-2 w-5 h-5 bg-stone-300 text-white rounded-full flex items-center justify-center text-[10px] cursor-pointer hover:bg-red-500"><i class="fa-solid fa-xmark"></i></button>
+                    <button @click="deleteShoppingItem(sIdx)" class="absolute top-2 right-2 w-5 h-5 bg-stone-300 text-white rounded-full flex items-center justify-center text-[10px] cursor-pointer hover:bg-red-500 z-10"><i class="fa-solid fa-xmark"></i></button>
                     
-                    <div class="w-full aspect-square bg-[#FAF7F2] rounded-xl overflow-hidden mb-2 border-2 border-dashed border-[#E2D3B7] flex items-center justify-center relative">
-                        <img v-if="item.image" :src="item.image" class="w-full h-full object-cover">
-                        <div class="text-center text-stone-400 p-2">
+                    <div class="w-full aspect-square bg-[#FAF7F2] rounded-xl overflow-hidden mb-2 border-2 border-dashed border-[#E2D3B7] flex items-center justify-center relative shadow-inner group">
+                        <img v-if="item.image" :src="item.image" class="w-full h-full object-cover object-center transition duration-300 group-hover:scale-105">
+                        <div v-else class="text-center text-stone-400 p-2 pointer-events-none">
                             <i class="fa-solid fa-camera text-lg mb-0.5 text-orange-300"></i>
                             <div class="text-[9px] font-bold">上傳相片</div>
                         </div>
-                        <input type="file" @change="uploadShoppingImage($event, sIdx)" class="absolute inset-0 opacity-0 cursor-pointer">
+                        <input type="file" accept="image/*" @change="triggerCropModal($event, sIdx)" class="absolute inset-0 opacity-0 cursor-pointer">
                     </div>
 
                     <input type="text" v-model="item.name" @change="updateCloudData" class="w-full text-xs font-bold text-center text-stone-800 bg-stone-50 p-1.5 rounded-lg focus:outline-none" placeholder="輸入商品名稱">
@@ -549,12 +555,38 @@
         </div>
     </div>
 
+    <div v-if="cropModalOpen" class="fixed inset-0 bg-stone-900/80 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+        <div class="bg-white rounded-[32px] w-full max-w-sm p-5 border-4 border-[#E2D3B7] shadow-2xl flex flex-col items-center space-y-4">
+            <div class="w-full flex justify-between items-center border-b pb-2 border-stone-100">
+                <h3 class="font-bold text-sm text-stone-800 flex items-center gap-1"><i class="fa-solid fa-scissors text-orange-400"></i> 調整商品相片位置</h3>
+                <span class="text-[10px] text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full font-bold">可單指拖曳對齊</span>
+            </div>
+            
+            <div class="w-64 h-64 bg-stone-100 rounded-2xl overflow-hidden relative border-2 border-[#D1C2A5] shadow-inner crop-area"
+                 @mousedown="startDrag" @mousemove="onDrag" @mouseup="endDrag" @mouseleave="endDrag"
+                 @touchstart="startDrag" @touchmove="onDrag" @touchend="endDrag">
+                <img :src="cropSourceUrl" :style="cropImageStyle" class="absolute max-w-none origin-center pointer-events-none">
+                <div class="absolute inset-0 border-2 border-dashed border-orange-400/70 rounded-2xl pointer-events-none m-1"></div>
+            </div>
+
+            <div class="flex gap-4 items-center bg-[#FAF7F2] px-4 py-2 rounded-2xl border border-[#E2D3B7]">
+                <button @click="changeScale(-0.1)" class="w-8 h-8 rounded-full bg-white border border-stone-300 flex items-center justify-center text-stone-600 active:scale-90 font-bold text-base shadow-xs"><i class="fa-solid fa-minus"></i></button>
+                <span class="text-[11px] font-bold text-stone-500 w-12 text-center">縮放比例</span>
+                <button @click="changeScale(0.1)" class="w-8 h-8 rounded-full bg-white border border-stone-300 flex items-center justify-center text-stone-600 active:scale-90 font-bold text-base shadow-xs"><i class="fa-solid fa-plus"></i></button>
+            </div>
+
+            <div class="w-full flex gap-2 pt-2 text-xs font-bold">
+                <button @click="cropModalOpen = false" class="bg-stone-100 text-stone-600 py-2.5 px-4 rounded-xl flex-1">取消</button>
+                <button @click="executeCrop" class="bg-emerald-400 text-white py-2.5 px-4 rounded-xl flex-1 shadow-md hover:bg-emerald-500"><i class="fa-solid fa-check"></i> 完成裁切</button>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script>
 const { createApp, ref, computed, onMounted } = Vue;
 
-// 1. 初始化 Firebase 專案組態（已自動填入您的金鑰）
 const firebaseConfig = {
   apiKey: "AIzaSyAnUpEhMEDA-VMFFDnC1B3jU", 
   authDomain: "jeju1-32b28.firebaseapp.com",
@@ -565,10 +597,8 @@ const firebaseConfig = {
   measurementId: "G-B38ZSBG6FH"
 };
 
-// 啟動 Firebase 服務
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-// 設定單一文件 ID 用於共同協作
 const docRef = db.collection("trips").doc("jeju_birthday_trip_shared");
 
 createApp({
@@ -585,7 +615,6 @@ createApp({
             { week: 'Tue', date: '9/18' }, { week: 'Wed', date: '9/19' }
         ];
 
-        // 初始預設資料（當資料庫全空時寫入）
         const defaultDayEvents = {
             0: [
                 { id: 101, category: '航班', name: '抵達濟州國際機場 (小港出發)', time: '18:50', note: '去程德威航空機票', transitMode: 'drive', transitTime: '30分鐘', image: '', hours: '', ticket: '', flightNo: 'TW606' },
@@ -612,7 +641,7 @@ createApp({
         const luggageItems = ref([
             { id: 501, category: '隨身背包', name: '護照、台灣駕照與國際駕照', qty: 1, checked: true }
         ]);
-        const cloudPaidSettlements = ref({}); // 紀錄被勾選的付款狀態
+        const cloudPaidSettlements = ref({});
 
         const modalOpen = ref(false);
         const isEditMode = ref(false);
@@ -622,10 +651,30 @@ createApp({
         const expenseModalOpen = ref(false);
         const formExpense = ref({ category: '飲食', name: '', date: '', krw: null, twd: null, payer: '曾曾', shares: ['曾曾', '小陳', '涵涵', '小恩'], payMethod: '現金' });
 
+        // ✂️ 裁切彈窗相關變數狀態
+        const cropModalOpen = ref(false);
+        const cropSourceUrl = ref('');
+        const cropTargetIndex = ref(null);
+        const cropScale = ref(1.0);
+        const cropOffset = ref({ x: 0, y: 0 });
+        const isDragging = ref(false);
+        const startMousePos = ref({ x: 0, y: 0 });
+
         const currentDayEvents = computed(() => dayEvents.value[selectedDayIndex.value] || []);
         const sortedExpenses = computed(() => [...expenses.value].sort((a, b) => new Date(b.date) - new Date(a.date)));
         const totalTwd = computed(() => expenses.value.reduce((sum, e) => sum + Number(e.twd || 0), 0));
         const totalKrw = computed(() => expenses.value.reduce((sum, e) => sum + Number(e.krw || 0), 0));
+
+        // 動態計算圖片在裁切視窗內的縮放平移樣式
+        const cropImageStyle = computed(() => {
+            return {
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                transform: `translate(${cropOffset.value.x}px, ${cropOffset.value.y}px) scale(${cropScale.value})`,
+                cursor: isDragging.value ? 'grabbing' : 'grab'
+            };
+        });
 
         const computedSettlements = computed(() => {
             const pool = { '曾曾': 0, '小陳': 0, '涵涵': 0, '小恩': 0 };
@@ -661,7 +710,6 @@ createApp({
 
         const settlementDone = computed(() => computedSettlements.value.length > 0 && computedSettlements.value.every(i => i.paid));
 
-        // ✨ 核心：上傳更新到 Firebase 雲端資料庫
         const updateCloudData = () => {
             docRef.set({
                 tripTitle: tripTitle.value,
@@ -681,7 +729,6 @@ createApp({
             updateCloudData();
         };
 
-        // 複製分享網址給朋友
         const copyShareLink = () => {
             navigator.clipboard.writeText(window.location.href).then(() => {
                 alert('🍊 共同編輯網址已複製！直接把網址傳給朋友就可以一起同步編輯囉！');
@@ -716,8 +763,90 @@ createApp({
         };
 
         const uploadEventImage = (e) => { const f = e.target.files[0]; if (f) { const r = new FileReader(); r.onload = (ev) => { formEvent.value.image = ev.target.result; }; r.readAsDataURL(f); } };
-        const uploadShoppingImage = (e, sIdx) => { const f = e.target.files[0]; if (f) { const r = new FileReader(); r.onload = (ev) => { shoppingList.value[sIdx].image = ev.target.result; updateCloudData(); }; r.readAsDataURL(f); } };
         const uploadHotelImage = (e, hIdx) => { const f = e.target.files[0]; if (f) { const r = new FileReader(); r.onload = (ev) => { hotels.value[hIdx].img = ev.target.result; updateCloudData(); }; r.readAsDataURL(f); } };
+
+        // ✂️ 啟動裁切流程彈窗
+        const triggerCropModal = (e, sIdx) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    cropSourceUrl.value = event.target.result;
+                    cropTargetIndex.value = sIdx;
+                    cropScale.value = 1.2; // 預設放大一點點好移動
+                    cropOffset.value = { x: 0, y: 0 };
+                    cropModalOpen.value = true;
+                };
+                reader.readAsDataURL(file);
+                e.target.value = ''; // 清空欄位以便重複觸發同一張
+            }
+        };
+
+        // 裁切手勢與滑鼠拖曳邏輯
+        const startDrag = (e) => {
+            isDragging.value = true;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            startMousePos.value = { x: clientX - cropOffset.value.x, y: clientY - cropOffset.value.y };
+        };
+        const onDrag = (e) => {
+            if (!isDragging.value) return;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            cropOffset.value = { x: clientX - startMousePos.value.x, y: clientY - startMousePos.value.y };
+        };
+        const endDrag = () => { isDragging.value = false; };
+        const changeScale = (val) => {
+            cropScale.value = Math.max(0.5, Math.min(4.0, cropScale.value + val));
+        };
+
+        // Canvas 畫布輸出生成最終裁切圖片
+        const executeCrop = () => {
+            const img = new Image();
+            img.src = cropSourceUrl.value;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                // 精簡壓縮：商品照使用 400x400 解析度足以清晰又省 Firestore 流量
+                canvas.width = 400;
+                canvas.height = 400;
+                const ctx = canvas.getContext('2d');
+
+                // 計算 HTML 容器對應真實圖檔尺寸的物理比率
+                const displayWidth = 256; 
+                const displayHeight = 256;
+                
+                // 計算等比縮放值
+                let renderW, renderH;
+                const imgRatio = img.width / img.height;
+                if (imgRatio > 1) {
+                    renderH = displayHeight;
+                    renderW = displayHeight * imgRatio;
+                } else {
+                    renderW = displayWidth;
+                    renderH = displayWidth / imgRatio;
+                }
+
+                // 套用使用者在畫面上滑動縮放的各項參數
+                const finalScale = cropScale.value * (renderW / img.width);
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.translate(centerX, centerY);
+                ctx.translate(cropOffset.value.x * (400/256), cropOffset.value.y * (400/256));
+                ctx.scale(finalScale, finalScale);
+                
+                // 置中繪製
+                ctx.drawImage(img, -img.width / 2, -img.height / 2);
+
+                // 轉出為 Base64 寫入 Firebase
+                shoppingList.value[cropTargetIndex.value].image = canvas.toDataURL('image/jpeg', 0.85);
+                cropModalOpen.value = false;
+                updateCloudData();
+            };
+        };
 
         const addShoppingItem = () => { shoppingList.value.push({ name: '', image: '' }); updateCloudData(); };
         const deleteShoppingItem = (idx) => { shoppingList.value.splice(idx, 1); updateCloudData(); };
@@ -744,7 +873,6 @@ createApp({
         const formatNumber = (num) => Math.round(num).toLocaleString();
 
         onMounted(() => {
-            // ✨ 核心：即時監聽雲端資料庫狀態雙向同步
             docRef.onSnapshot((doc) => {
                 if (doc.exists) {
                     const parsed = doc.data();
@@ -756,7 +884,6 @@ createApp({
                     if (parsed.luggageItems) luggageItems.value = parsed.luggageItems;
                     if (parsed.cloudPaidSettlements) cloudPaidSettlements.value = parsed.cloudPaidSettlements;
                 } else {
-                    // 若雲端完全沒有初始資料，則將目前的預設資料初次推送上去
                     updateCloudData();
                 }
             }, (error) => {
@@ -769,10 +896,14 @@ createApp({
             calcKrw, calcTwd, modalOpen, isEditMode, formEvent, expenseModalOpen, formExpense, currentDayEvents,
             sortedExpenses, totalTwd, totalKrw, computedSettlements, settlementDone,
             openAddModal, openEditModal, saveEvent, confirmDeleteEvent, moveEvent,
-            uploadEventImage, uploadShoppingImage, uploadHotelImage, addShoppingItem, deleteShoppingItem,
+            uploadEventImage, uploadHotelImage, addShoppingItem, deleteShoppingItem,
             openExpenseModal, saveExpenseItem, deleteExpenseItem, convertCurrency, syncExpenseCurrency,
             getLuggageByCategory, addLuggageItem, deleteLuggageItem, getCategoryEmoji, getCategoryBg, formatNumber,
-            updateCloudData, toggleSettlementPaid, copyShareLink
+            updateCloudData, toggleSettlementPaid, copyShareLink,
+            
+            // 裁切模組回傳
+            cropModalOpen, cropSourceUrl, cropScale, cropImageStyle, isDragging,
+            triggerCropModal, startDrag, onDrag, endDrag, changeScale, executeCrop
         };
     }
 }).mount('#app');

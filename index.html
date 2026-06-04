@@ -167,22 +167,22 @@
 
                         <div class="absolute left-0 top-6 w-1.5 h-8 rounded-r-md" :class="getCategoryBg(event.category)"></div>
 
-                        <div class="flex gap-3">
-                            <div class="w-16 h-16 bg-stone-50 rounded-xl overflow-hidden flex-shrink-0 border border-stone-200 flex items-center justify-center relative shadow-inner">
+                        <div class="flex gap-3 items-start">
+                            <div class="w-24 h-24 bg-stone-50 rounded-xl overflow-hidden flex-shrink-0 border border-stone-200 flex items-center justify-center relative shadow-inner">
                                 <img v-if="event.image" :src="event.image" class="w-full h-full object-cover">
-                                <span v-else class="text-2xl">{{ getCategoryEmoji(event.category) }}</span>
+                                <span v-else class="text-3xl">{{ getCategoryEmoji(event.category) }}</span>
                             </div>
 
-                            <div class="flex-1 min-w-0">
+                            <div class="flex-1 min-w-0 py-0.5">
                                 <div class="flex items-center gap-1.5">
                                     <span class="text-[9px] font-bold text-white px-1.5 py-0.5 rounded" :class="getCategoryBg(event.category)">
                                         {{ event.category }}
                                     </span>
                                     <span class="text-xs text-stone-400 font-bold"><i class="fa-regular fa-clock"></i> {{ event.time }}</span>
                                 </div>
-                                <h4 class="font-bold text-sm text-stone-900 mt-1 truncate">{{ event.name }}</h4>
+                                <h4 class="font-bold text-sm text-stone-900 mt-1.5 break-words line-clamp-2 leading-snug">{{ event.name }}</h4>
                                 
-                                <div class="flex flex-wrap gap-x-2.5 mt-1 text-[11px] text-stone-500">
+                                <div class="flex flex-wrap gap-x-2.5 mt-1.5 text-[11px] text-stone-500">
                                     <span v-if="event.hours && ['景點','住宿','美食','購物'].includes(event.category)"><i class="fa-regular fa-clock text-amber-500"></i> {{ event.hours }}</span>
                                     <span v-if="event.ticket && event.category === '景點'" class="text-emerald-600 font-bold"><i class="fa-solid fa-ticket"></i> {{ event.ticket }}</span>
                                 </div>
@@ -922,7 +922,7 @@ createApp({
         const deleteLuggageItem = (id) => { luggageItems.value = luggageItems.value.filter(l => l.id !== id); updateCloudData(); };
 
         const getCategoryEmoji = (cat) => { return { '景點': '🍊', '住宿': '🏨', '美食': '🍗', '購物': '🛍️', '航班': '✈️', '其他': '✨' }[cat] || '📍'; };
-        const getCategoryBg = (cat) => { return { '景點': 'bg-orange-400', '住宿': 'bg-emerald-400', '美食': 'bg-amber-500', '購物': 'bg-purple-400', '航班': 'bg-sky-400', '其他': 'bg-stone-400' }[cat] || 'bg-stone-400'; };
+        const getCategoryBg = (cat) => { return { '景點': 'bg-orange-400', '住宿': 'bg-emerald-400', '美食': 'bg-amber-500', '購物': 'bg-purple-400', '航班': 'bg-sky-400', 'other': 'bg-stone-400' }[cat] || 'bg-stone-400'; };
         const formatNumber = (num) => Math.round(num).toLocaleString();
 
         onMounted(() => {

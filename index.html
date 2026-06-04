@@ -167,22 +167,22 @@
 
                         <div class="absolute left-0 top-6 w-1.5 h-8 rounded-r-md" :class="getCategoryBg(event.category)"></div>
 
-                        <div class="flex gap-3 items-start">
-                            <div class="w-24 h-24 bg-stone-50 rounded-xl overflow-hidden flex-shrink-0 border border-stone-200 flex items-center justify-center relative shadow-inner">
+                        <div class="flex gap-3">
+                            <div class="w-16 h-16 bg-stone-50 rounded-xl overflow-hidden flex-shrink-0 border border-stone-200 flex items-center justify-center relative shadow-inner">
                                 <img v-if="event.image" :src="event.image" class="w-full h-full object-cover">
-                                <span v-else class="text-3xl">{{ getCategoryEmoji(event.category) }}</span>
+                                <span v-else class="text-2xl">{{ getCategoryEmoji(event.category) }}</span>
                             </div>
 
-                            <div class="flex-1 min-w-0 py-0.5">
+                            <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-1.5">
                                     <span class="text-[9px] font-bold text-white px-1.5 py-0.5 rounded" :class="getCategoryBg(event.category)">
                                         {{ event.category }}
                                     </span>
                                     <span class="text-xs text-stone-400 font-bold"><i class="fa-regular fa-clock"></i> {{ event.time }}</span>
                                 </div>
-                                <h4 class="font-bold text-sm text-stone-900 mt-1.5 break-words line-clamp-2 leading-snug">{{ event.name }}</h4>
+                                <h4 class="font-bold text-sm text-stone-900 mt-1 truncate">{{ event.name }}</h4>
                                 
-                                <div class="flex flex-wrap gap-x-2.5 mt-1.5 text-[11px] text-stone-500">
+                                <div class="flex flex-wrap gap-x-2.5 mt-1 text-[11px] text-stone-500">
                                     <span v-if="event.hours && ['景點','住宿','美食','購物'].includes(event.category)"><i class="fa-regular fa-clock text-amber-500"></i> {{ event.hours }}</span>
                                     <span v-if="event.ticket && event.category === '景點'" class="text-emerald-600 font-bold"><i class="fa-solid fa-ticket"></i> {{ event.ticket }}</span>
                                 </div>
@@ -568,10 +568,10 @@
         <div class="bg-white rounded-[32px] w-full max-w-sm p-5 border-4 border-[#E2D3B7] shadow-2xl flex flex-col items-center space-y-4">
             <div class="w-full flex justify-between items-center border-b pb-2 border-stone-100">
                 <h3 class="font-bold text-sm text-stone-800 flex items-center gap-1"><i class="fa-solid fa-scissors text-orange-400"></i> 調整照片適配位置</h3>
-                <span class="text-[10px] text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full font-bold">可單指拖曳 / 雙指縮放</span>
+                <span class="text-[10px] text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full font-bold">可單指拖曳對齊</span>
             </div>
             
-            <div id="cropArea" :class="cropModuleType === 'hotel' ? 'w-full h-44' : 'w-64 h-64'" class="bg-stone-100 rounded-2xl overflow-hidden relative border-2 border-[#D1C2A5] shadow-inner crop-area"
+            <div :class="cropModuleType === 'hotel' ? 'w-full h-44' : 'w-64 h-64'" class="bg-stone-100 rounded-2xl overflow-hidden relative border-2 border-[#D1C2A5] shadow-inner crop-area"
                  @mousedown="startDrag" @mousemove="onDrag" @mouseup="endDrag" @mouseleave="endDrag"
                  @touchstart="startDrag" @touchmove="onDrag" @touchend="endDrag">
                 <img :src="cropSourceUrl" :style="cropImageStyle" class="absolute max-w-none origin-center pointer-events-none">
@@ -660,7 +660,6 @@ createApp({
         const expenseModalOpen = ref(false);
         const formExpense = ref({ category: '飲食', name: '', date: '', krw: null, twd: null, payer: '曾曾', shares: ['曾曾', '小陳', '涵涵', '小恩'], payMethod: '現金' });
 
-        // 裁切模組響應式狀態
         const cropModalOpen = ref(false);
         const cropSourceUrl = ref('');
         const cropTargetIndex = ref(null);
@@ -669,7 +668,6 @@ createApp({
         const cropOffset = ref({ x: 0, y: 0 });
         const isDragging = ref(false);
         const startMousePos = ref({ x: 0, y: 0 });
-        const startTouchDist = ref(0); // 雙指初始距離紀錄
 
         const currentDayEvents = computed(() => dayEvents.value[selectedDayIndex.value] || []);
         const sortedExpenses = computed(() => [...expenses.value].sort((a, b) => new Date(b.date) - new Date(a.date)));
@@ -772,6 +770,8 @@ createApp({
             }
         };
 
+        // 修正處：移除原本不限制體積、無法儲存的 uploadHotelImage 函式
+
         const triggerCropModal = (e, targetIdx, type = 'shopping') => {
             const file = e.target.files[0];
             if (file) {
@@ -780,7 +780,7 @@ createApp({
                     cropSourceUrl.value = event.target.result;
                     cropTargetIndex.value = targetIdx;
                     cropModuleType.value = type;
-                    cropScale.value = 1.0;
+                    cropScale.value = 1.2;
                     cropOffset.value = { x: 0, y: 0 };
                     cropModalOpen.value = true;
                 };
@@ -789,110 +789,75 @@ createApp({
             }
         };
 
-        // 輔助計算：兩指頭觸控點之間的距離
-        const getTouchDistance = (touches) => {
-            const dx = touches[0].clientX - touches[1].clientX;
-            const dy = touches[0].clientY - touches[1].clientY;
-            return Math.sqrt(dx * dx + dy * dy);
-        };
-
         const startDrag = (e) => {
-            if (e.touches && e.touches.length === 2) {
-                // 當出現兩隻手指時切換為縮放模式，記錄初始幾何距離
-                isDragging.value = false;
-                startTouchDist.value = getTouchDistance(e.touches);
-            } else {
-                // 單指或滑鼠模式 (拖曳位移)
-                isDragging.value = true;
-                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                startMousePos.value = { x: clientX - cropOffset.value.x, y: clientY - cropOffset.value.y };
-            }
+            isDragging.value = true;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            startMousePos.value = { x: clientX - cropOffset.value.x, y: clientY - cropOffset.value.y };
         };
-
         const onDrag = (e) => {
-            if (e.touches && e.touches.length === 2) {
-                // 兩隻手指縮放機制
-                const currentDist = getTouchDistance(e.touches);
-                const factor = currentDist / startTouchDist.value;
-                // 依比例平滑更新縮放系數
-                cropScale.value = Math.max(0.3, Math.min(5.0, cropScale.value * factor));
-                startTouchDist.value = currentDist; // 記憶當前距離為基準點
-            } else {
-                // 單指或滑鼠拖曳
-                if (!isDragging.value) return;
-                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                cropOffset.value = { x: clientX - startMousePos.value.x, y: clientY - startMousePos.value.y };
-            }
+            if (!isDragging.value) return;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            cropOffset.value = { x: clientX - startMousePos.value.x, y: clientY - startMousePos.value.y };
         };
-
-        const endDrag = () => { 
-            isDragging.value = false; 
-        };
-
+        const endDrag = () => { isDragging.value = false; };
         const changeScale = (val) => {
-            cropScale.value = Math.max(0.3, Math.min(5.0, cropScale.value + val));
+            cropScale.value = Math.max(0.5, Math.min(4.0, cropScale.value + val));
         };
 
-        // 核心修正：動態抓取 DOM 的完美裁切比例運算
+        // 修正處：讓裁切邏輯相容飯店卡片的長方形尺寸（寬400、高220）與一般正方形（400x400）
         const executeCrop = () => {
             const img = new Image();
             img.src = cropSourceUrl.value;
             img.onload = () => {
                 const canvas = document.createElement('canvas');
                 
-                // 動態取得當前前端框框的實際渲染像素大小，避免寫死 256 造成錯位
-                const cropAreaEl = document.getElementById('cropArea');
-                const displayWidth = cropAreaEl ? cropAreaEl.clientWidth : 256;
-                const displayHeight = cropAreaEl ? cropAreaEl.clientHeight : 256;
-
-                // Canvas 解析度大小（設定高畫質基準點）
+                // 依據模組種類動態設定裁切畫布尺寸 (飯店適合長方形)
                 if (cropModuleType.value === 'hotel') {
-                    canvas.width = 600;
-                    canvas.height = 330; // 飯店維持長方形比例
+                    canvas.width = 400;
+                    canvas.height = 220; 
                 } else {
-                    canvas.width = 500;
-                    canvas.height = 500; // 購物與行程卡片維持 1:1 正方形
+                    canvas.width = 400;
+                    canvas.height = 400;
                 }
                 
                 const ctx = canvas.getContext('2d');
+                const displayWidth = 256; 
+                const displayHeight = cropModuleType.value === 'hotel' ? 140 : 256;
                 
-                // 計算圖片在 object-fit: contain 底下的原始外觀預設尺寸
                 let renderW, renderH;
                 const imgRatio = img.width / img.height;
-                const areaRatio = displayWidth / displayHeight;
-                if (imgRatio > areaRatio) {
-                    renderW = displayWidth;
-                    renderH = displayWidth / imgRatio;
-                } else {
+                if (imgRatio > (displayWidth / displayHeight)) {
                     renderH = displayHeight;
                     renderW = displayHeight * imgRatio;
+                } else {
+                    renderW = displayWidth;
+                    renderH = displayWidth / imgRatio;
                 }
 
-                // 精確比例轉算：將 DOM 的座標尺標等比映射到實體高畫質畫布中
-                const finalScale = cropScale.value * (renderW / img.width) * (canvas.width / displayWidth);
-                const canvasOffsetX = cropOffset.value.x * (canvas.width / displayWidth);
-                const canvasOffsetY = cropOffset.value.y * (canvas.height / displayHeight);
+                const finalScale = cropScale.value * (renderW / img.width);
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
 
-                // 填底色避免去背圖變黑色
                 ctx.fillStyle = '#FFFFFF';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 
-                // 變換矩陣至畫布中心，實作所見即所得的位置擺放
-                ctx.translate(canvas.width / 2 + canvasOffsetX, canvas.height / 2 + canvasOffsetY);
+                ctx.translate(centerX, centerY);
+                ctx.translate(cropOffset.value.x * (canvas.width/displayWidth), cropOffset.value.y * (canvas.height/displayHeight));
                 ctx.scale(finalScale, finalScale);
+                
                 ctx.drawImage(img, -img.width / 2, -img.height / 2);
 
-                // 壓縮為優質輕量的 JPEG
-                const finalBase64 = canvas.toDataURL('image/jpeg', 0.85);
+                // 壓縮為 JPEG，維持小體積
+                const finalBase64 = canvas.toDataURL('image/jpeg', 0.82);
 
-                // 依據模組分類存入 Vue 響應式結構並同步 Firestore 共同編輯
+                // 依據上傳來源寫入正確的資料結構
                 if (cropModuleType.value === 'schedule') {
                     formEvent.value.image = finalBase64;
                 } else if (cropModuleType.value === 'hotel') {
                     hotels.value[cropTargetIndex.value].img = finalBase64;
-                    updateCloudData(); 
+                    updateCloudData(); // 立即同步至 Firestore 雲端
                 } else {
                     shoppingList.value[cropTargetIndex.value].image = finalBase64;
                     updateCloudData();
@@ -922,7 +887,7 @@ createApp({
         const deleteLuggageItem = (id) => { luggageItems.value = luggageItems.value.filter(l => l.id !== id); updateCloudData(); };
 
         const getCategoryEmoji = (cat) => { return { '景點': '🍊', '住宿': '🏨', '美食': '🍗', '購物': '🛍️', '航班': '✈️', '其他': '✨' }[cat] || '📍'; };
-        const getCategoryBg = (cat) => { return { '景點': 'bg-orange-400', '住宿': 'bg-emerald-400', '美食': 'bg-amber-500', '購物': 'bg-purple-400', '航班': 'bg-sky-400', 'other': 'bg-stone-400' }[cat] || 'bg-stone-400'; };
+        const getCategoryBg = (cat) => { return { '景點': 'bg-orange-400', '住宿': 'bg-emerald-400', '美食': 'bg-amber-500', '購物': 'bg-purple-400', '航班': 'bg-sky-400', '其他': 'bg-stone-400' }[cat] || 'bg-stone-400'; };
         const formatNumber = (num) => Math.round(num).toLocaleString();
 
         onMounted(() => {

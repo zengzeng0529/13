@@ -12,6 +12,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
     
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
     <style>
         body {
             font-family: 'Zen Maru Gothic', 'Comic Sans MS', sans-serif;
@@ -68,8 +71,8 @@
 <div id="app" class="max-w-md mx-auto bg-[#FDFDFB] min-h-screen shadow-2xl relative flex flex-col border-x-4 border-[#E2D3B7] pb-36">
     
     <div class="absolute top-4 right-4 z-40">
-        <button @click="shareData" class="bg-orange-400 hover:bg-orange-500 text-white w-11 h-11 rounded-full flex items-center justify-center transform active:scale-95 transition cursor-pointer border-2 border-white shadow-md">
-            <i class="fa-solid fa-paper-plane text-sm"></i>
+        <button @click="copyShareLink" class="bg-orange-400 hover:bg-orange-500 text-white w-11 h-11 rounded-full flex items-center justify-center transform active:scale-95 transition cursor-pointer border-2 border-white shadow-md">
+            <i class="fa-solid fa-share-nodes text-sm"></i>
         </button>
     </div>
 
@@ -79,7 +82,7 @@
         
         <div class="absolute bottom-5 left-5 right-5 text-white">
             <div class="flex items-center gap-2">
-                <input type="text" v-model="tripTitle" class="bg-transparent font-bold text-xl border-b-2 border-dashed border-white/50 focus:outline-none focus:border-orange-300 w-full drop-shadow-md text-white">
+                <input type="text" v-model="tripTitle" @change="updateCloudData" class="bg-transparent font-bold text-xl border-b-2 border-dashed border-white/50 focus:outline-none focus:border-orange-300 w-full drop-shadow-md text-white">
                 <i class="fa-solid fa-pen text-xs opacity-70"></i>
             </div>
             <p class="text-[11px] text-orange-100 mt-1 font-medium">🍊 濟州島海島風情 🌿 橘子 · 綠葉 · 石頭爺爺 🗿</p>
@@ -98,7 +101,7 @@
                         <div class="text-[11px] text-stone-500 mt-0.5">氣溫: <span class="text-orange-500 font-bold">23°C</span> | 體感溫度: <span class="text-amber-600 font-bold">21.5°C</span></div>
                     </div>
                 </div>
-                <div class="text-right text-[10px] bg-orange-100 text-orange-800 px-2 py-1 rounded-lg font-bold">🗿 自動連動</div>
+                <div class="text-right text-[10px] bg-emerald-100 text-emerald-800 px-2 py-1 rounded-lg font-bold">✨ 雲端共同編輯中</div>
             </div>
 
             <div class="flex gap-2 overflow-x-auto pb-2 hide-scrollbar snap-x">
@@ -195,12 +198,12 @@
                     <div v-if="eIdx < currentDayEvents.length - 1" class="my-2 flex items-center justify-center gap-3">
                         <div class="h-5 border-l-2 border-dashed border-orange-200"></div>
                         <div class="bg-[#FAF7F2] text-stone-700 px-3 py-1 rounded-full text-[11px] flex items-center gap-1.5 border border-[#D1C2A5] shadow-xs">
-                            <select v-model="event.transitMode" class="bg-transparent focus:outline-none font-bold text-stone-600 cursor-pointer text-[11px]">
+                            <select v-model="event.transitMode" @change="updateCloudData" class="bg-transparent focus:outline-none font-bold text-stone-600 cursor-pointer text-[11px]">
                                 <option value="drive">🚗 車子</option>
                                 <option value="walk">🚶 走路</option>
                                 <option value="transit">🚌 公車捷運</option>
                             </select>
-                            <input type="text" v-model="event.transitTime" class="w-14 bg-transparent text-center border-b border-orange-300 font-bold focus:outline-none text-orange-500" placeholder="10 分鐘">
+                            <input type="text" v-model="event.transitTime" @change="updateCloudData" class="w-14 bg-transparent text-center border-b border-orange-300 font-bold focus:outline-none text-orange-500" placeholder="10 分鐘">
                         </div>
                         <div class="h-5 border-l-2 border-dashed border-orange-200"></div>
                     </div>
@@ -290,33 +293,33 @@
                     <div class="grid grid-cols-2 gap-2 text-xs">
                         <div>
                             <label class="text-[10px] text-stone-400 font-bold block mb-0.5">飯店名稱</label>
-                            <input type="text" v-model="hotel.name" class="w-full bg-[#FAF7F2] border border-[#E2D3B7] rounded-lg p-1.5 font-bold focus:outline-none">
+                            <input type="text" v-model="hotel.name" @change="updateCloudData" class="w-full bg-[#FAF7F2] border border-[#E2D3B7] rounded-lg p-1.5 font-bold focus:outline-none">
                         </div>
                         <div>
                             <label class="text-[10px] text-stone-400 font-bold block mb-0.5">電話號碼</label>
-                            <input type="text" v-model="hotel.phone" class="w-full bg-[#FAF7F2] border border-[#E2D3B7] rounded-lg p-1.5 focus:outline-none">
+                            <input type="text" v-model="hotel.phone" @change="updateCloudData" class="w-full bg-[#FAF7F2] border border-[#E2D3B7] rounded-lg p-1.5 focus:outline-none">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2 text-xs">
                         <div>
                             <label class="text-[10px] text-stone-400 font-bold block mb-0.5">Check-In 時間</label>
-                            <input type="text" v-model="hotel.checkIn" class="w-full bg-[#FAF7F2] border border-[#E2D3B7] rounded-lg p-1.5 focus:outline-none">
+                            <input type="text" v-model="hotel.checkIn" @change="updateCloudData" class="w-full bg-[#FAF7F2] border border-[#E2D3B7] rounded-lg p-1.5 focus:outline-none">
                         </div>
                         <div>
                             <label class="text-[10px] text-stone-400 font-bold block mb-0.5">Check-Out 時間</label>
-                            <input type="text" v-model="hotel.checkOut" class="w-full bg-[#FAF7F2] border border-[#E2D3B7] rounded-lg p-1.5 focus:outline-none">
+                            <input type="text" v-model="hotel.checkOut" @change="updateCloudData" class="w-full bg-[#FAF7F2] border border-[#E2D3B7] rounded-lg p-1.5 focus:outline-none">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2 text-xs">
                         <div class="col-span-2">
                             <label class="text-[10px] text-stone-400 font-bold block mb-0.5">地址 (填完可啟動導航)</label>
-                            <input type="text" v-model="hotel.address" class="w-full bg-[#FAF7F2] border border-[#E2D3B7] rounded-lg p-1.5 focus:outline-none" placeholder="請填寫韓文或英文地址">
+                            <input type="text" v-model="hotel.address" @change="updateCloudData" class="w-full bg-[#FAF7F2] border border-[#E2D3B7] rounded-lg p-1.5 focus:outline-none" placeholder="請填寫韓文或英文地址">
                         </div>
                         <div class="col-span-2">
                             <label class="text-[10px] text-stone-400 font-bold block mb-0.5">訂單編號</label>
-                            <input type="text" v-model="hotel.orderId" class="w-full bg-[#FAF7F2] border border-[#E2D3B7] rounded-lg p-1.5 focus:outline-none">
+                            <input type="text" v-model="hotel.orderId" @change="updateCloudData" class="w-full bg-[#FAF7F2] border border-[#E2D3B7] rounded-lg p-1.5 focus:outline-none">
                         </div>
                     </div>
 
@@ -355,7 +358,7 @@
                         <input type="file" @change="uploadShoppingImage($event, sIdx)" class="absolute inset-0 opacity-0 cursor-pointer">
                     </div>
 
-                    <input type="text" v-model="item.name" class="w-full text-xs font-bold text-center text-stone-800 bg-stone-50 p-1.5 rounded-lg focus:outline-none" placeholder="輸入商品名稱">
+                    <input type="text" v-model="item.name" @change="updateCloudData" class="w-full text-xs font-bold text-center text-stone-800 bg-stone-50 p-1.5 rounded-lg focus:outline-none" placeholder="輸入商品名稱">
                 </div>
             </div>
             <button @click="addShoppingItem" class="fixed bottom-24 right-6 bg-emerald-400 text-white w-14 h-14 rounded-full flex items-center justify-center z-40 border-4 border-white transform active:scale-95 transition shadow-lg"><i class="fa-solid fa-plus text-xl"></i></button>
@@ -378,7 +381,7 @@
                 <ul v-else class="space-y-2 text-xs">
                     <li v-for="(settle, sIdx) in computedSettlements" :key="sIdx" class="flex items-center justify-between border-b pb-1.5 border-stone-100">
                         <div class="flex items-center gap-2" :class="{'line-through text-stone-400 opacity-40': settle.paid}">
-                            <input type="checkbox" v-model="settle.paid" :disabled="settlementDone" class="w-4 h-4 rounded text-orange-400 cursor-pointer">
+                            <input type="checkbox" v-model="settle.paid" @change="toggleSettlementPaid(sIdx)" :disabled="settlementDone" class="w-4 h-4 rounded text-orange-400 cursor-pointer">
                             <span class="font-bold">{{ settle.from }}</span> ➔ 需給 <span class="text-orange-400 font-bold">{{ settle.to }}</span>
                         </div>
                         <div class="font-bold text-sm" :class="settle.paid ? 'line-through text-stone-500' : 'text-emerald-600'">
@@ -435,14 +438,14 @@
                 <div class="space-y-2">
                     <div v-for="lug in getLuggageByCategory(cat)" :key="lug.id" class="flex items-center justify-between bg-orange-50/10 p-2 rounded-xl text-xs border border-orange-100">
                         <div class="flex items-center gap-2 flex-1">
-                            <input type="checkbox" v-model="lug.checked" class="w-4 h-4 rounded text-orange-400 cursor-pointer">
-                            <input type="text" v-model="lug.name" class="bg-transparent font-bold text-stone-800 focus:outline-none w-full" placeholder="要帶些什麼？">
+                            <input type="checkbox" v-model="lug.checked" @change="updateCloudData" class="w-4 h-4 rounded text-orange-400 cursor-pointer">
+                            <input type="text" v-model="lug.name" @change="updateCloudData" class="bg-transparent font-bold text-stone-800 focus:outline-none w-full" placeholder="要帶些什麼？">
                         </div>
                         <div class="flex items-center gap-2">
                             <div class="flex items-center bg-white border border-stone-200 rounded-lg text-[11px]">
-                                <button @click="lug.qty > 1 ? lug.qty-- : null" class="px-1.5 py-0.5 font-bold text-orange-400">-</button>
+                                <button @click="lug.qty > 1 ? (lug.qty--, updateCloudData()) : null" class="px-1.5 py-0.5 font-bold text-orange-400">-</button>
                                 <span class="px-1 font-bold text-stone-800 min-w-[12px] text-center">{{ lug.qty }}</span>
-                                <button @click="lug.qty++" class="px-1.5 py-0.5 font-bold text-orange-400">+</button>
+                                <button @click="lug.qty++, updateCloudData()" class="px-1.5 py-0.5 font-bold text-orange-400">+</button>
                             </div>
                             <button @click="deleteLuggageItem(lug.id)" class="text-stone-300 hover:text-red-500"><i class="fa-solid fa-trash text-xs"></i></button>
                         </div>
@@ -549,7 +552,24 @@
 </div>
 
 <script>
-const { createApp, ref, computed, watch, onMounted } = Vue;
+const { createApp, ref, computed, onMounted } = Vue;
+
+// 1. 初始化 Firebase 專案組態（已自動填入您的金鑰）
+const firebaseConfig = {
+  apiKey: "AIzaSyAnUpEhMEDA-VMFFDnC1B3jU", 
+  authDomain: "jeju1-32b28.firebaseapp.com",
+  projectId: "jeju1-32b28",
+  storageBucket: "jeju1-32b28.firebasestorage.app",
+  messagingSenderId: "111349992047",
+  appId: "1:111349992047:web:c1044e07f83d454482a197",
+  measurementId: "G-B38ZSBG6FH"
+};
+
+// 啟動 Firebase 服務
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+// 設定單一文件 ID 用於共同協作
+const docRef = db.collection("trips").doc("jeju_birthday_trip_shared");
 
 createApp({
     setup() {
@@ -565,8 +585,8 @@ createApp({
             { week: 'Tue', date: '9/18' }, { week: 'Wed', date: '9/19' }
         ];
 
-        // 2. 完美調整第一天首站航班資訊 (更正為 小港機場 KHH)
-        const dayEvents = ref({
+        // 初始預設資料（當資料庫全空時寫入）
+        const defaultDayEvents = {
             0: [
                 { id: 101, category: '航班', name: '抵達濟州國際機場 (小港出發)', time: '18:50', note: '去程德威航空機票', transitMode: 'drive', transitTime: '30分鐘', image: '', hours: '', ticket: '', flightNo: 'TW606' },
                 { id: 102, category: '其他', name: '乐天租车济州店取車', time: '20:00', note: '辦理租車取車手續', transitMode: 'drive', transitTime: '30分鐘', image: '', hours: '', ticket: '' },
@@ -575,22 +595,24 @@ createApp({
             1: [
                 { id: 201, category: '景點', name: '9.81Park济州 (開賽車）', time: '09:00', note: '瘋狂刺激重力賽車體驗', transitMode: 'drive', transitTime: '60分鐘', image: '', hours: '09:00 - 18:30', ticket: '₩29,500' }
             ], 2: [], 3: [], 4: [], 5: []
-        });
+        };
 
-        // 4. 預設完美配齊 5 天的獨立住宿空格陣列
-        const hotels = ref([
+        const defaultHotels = [
             { name: '濟州海景溫馨別墅 (Day 1)', orderId: 'LT-91401', checkIn: '9/14 15:00', checkOut: '9/15 11:00', phone: '+82-64-111-1111', address: '26 Eomjang-ro, Jeju-si, Jeju-do', img: '' },
             { name: '西歸浦舒適手帳旅宿 (Day 2)', orderId: 'LT-91502', checkIn: '9/15 15:00', checkOut: '9/16 11:00', phone: '+82-64-222-2222', address: '濟州特別自治道西歸浦市', img: '' },
             { name: '城山日出海景飯店 (Day 3)', orderId: 'LT-91603', checkIn: '9/16 15:00', checkOut: '9/17 11:00', phone: '+82-64-333-3333', address: '濟州特別自治道城山邑', img: '' },
             { name: '涯月落日設計風民宿 (Day 4)', orderId: 'LT-91704', checkIn: '9/17 15:00', checkOut: '9/18 11:00', phone: '+82-64-444-4444', address: '濟州特別自治道涯月邑', img: '' },
             { name: '濟州市區購物精品飯店 (Day 5)', orderId: 'LT-91805', checkIn: '9/18 15:00', checkOut: '9/19 10:00', phone: '+82-64-555-5555', address: '濟州市連洞', img: '' }
-        ]);
+        ];
 
+        const dayEvents = ref({...defaultDayEvents});
+        const hotels = ref([...defaultHotels]);
         const shoppingList = ref([{ name: '濟州柑橘巧克力', image: '' }]);
         const expenses = ref([{ id: 901, category: '住宿', name: '第一晚別墅預付款', date: '2026-09-14', krw: 126000, twd: 3000, payer: '曾曾', shares: ['曾曾', '小陳', '涵涵', '小恩'], payMethod: '信用卡', note: '' }]);
         const luggageItems = ref([
             { id: 501, category: '隨身背包', name: '護照、台灣駕照與國際駕照', qty: 1, checked: true }
         ]);
+        const cloudPaidSettlements = ref({}); // 紀錄被勾選的付款狀態
 
         const modalOpen = ref(false);
         const isEditMode = ref(false);
@@ -600,7 +622,6 @@ createApp({
         const expenseModalOpen = ref(false);
         const formExpense = ref({ category: '飲食', name: '', date: '', krw: null, twd: null, payer: '曾曾', shares: ['曾曾', '小陳', '涵涵', '小恩'], payMethod: '現金' });
 
-        const checkedSettlementIndices = ref([]);
         const currentDayEvents = computed(() => dayEvents.value[selectedDayIndex.value] || []);
         const sortedExpenses = computed(() => [...expenses.value].sort((a, b) => new Date(b.date) - new Date(a.date)));
         const totalTwd = computed(() => expenses.value.reduce((sum, e) => sum + Number(e.twd || 0), 0));
@@ -629,7 +650,9 @@ createApp({
             while (i < debtors.length && j < creditors.length) {
                 const d = debtors[i], c = creditors[j];
                 const settleAmt = Math.min(d.bal, c.bal);
-                matrix.push({ from: d.name, to: c.name, amount: settleAmt, paid: false });
+                const key = `${d.name}_to_${c.name}`;
+                const isPaid = cloudPaidSettlements.value[key] || false;
+                matrix.push({ from: d.name, to: c.name, amount: settleAmt, paid: isPaid });
                 d.bal -= settleAmt; c.bal -= settleAmt;
                 if (d.bal <= 0.1) i++; if (c.bal <= 0.1) j++;
             }
@@ -638,17 +661,30 @@ createApp({
 
         const settlementDone = computed(() => computedSettlements.value.length > 0 && computedSettlements.value.every(i => i.paid));
 
-        const syncToLocalStorage = () => {
-            const dataset = { tripTitle: tripTitle.value, dayEvents: dayEvents.value, hotels: hotels.value, shoppingList: shoppingList.value, expenses: expenses.value, luggageItems: luggageItems.value };
-            localStorage.setItem('jeju_birthday_trip_v7', JSON.stringify(dataset));
+        // ✨ 核心：上傳更新到 Firebase 雲端資料庫
+        const updateCloudData = () => {
+            docRef.set({
+                tripTitle: tripTitle.value,
+                dayEvents: dayEvents.value,
+                hotels: hotels.value,
+                shoppingList: shoppingList.value,
+                expenses: expenses.value,
+                luggageItems: luggageItems.value,
+                cloudPaidSettlements: cloudPaidSettlements.value
+            }, { merge: true }).catch(err => console.error("雲端儲存失敗:", err));
         };
-        watch([tripTitle, dayEvents, hotels, shoppingList, expenses, luggageItems], syncToLocalStorage, { deep: true });
 
-        const shareData = () => {
-            const dataStr = JSON.stringify({ tripTitle: tripTitle.value, dayEvents: dayEvents.value, hotels: hotels.value, shoppingList: shoppingList.value, expenses: expenses.value, luggageItems: luggageItems.value });
-            const compressed = LZString.compressToEncodedURIComponent(dataStr);
-            navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}?trip=${compressed}`).then(() => {
-                alert('🍊 手帳資料與五天住宿格子網址已同步生成！');
+        const toggleSettlementPaid = (idx) => {
+            const settle = computedSettlements.value[idx];
+            const key = `${settle.from}_to_${settle.to}`;
+            cloudPaidSettlements.value[key] = settle.paid;
+            updateCloudData();
+        };
+
+        // 複製分享網址給朋友
+        const copyShareLink = () => {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                alert('🍊 共同編輯網址已複製！直接把網址傳給朋友就可以一起同步編輯囉！');
             });
         };
 
@@ -660,30 +696,35 @@ createApp({
             else { formEvent.value.id = Date.now(); dayEvents.value[selectedDayIndex.value].push({ ...formEvent.value }); }
             dayEvents.value[selectedDayIndex.value].sort((a, b) => a.time.localeCompare(b.time));
             modalOpen.value = false;
+            updateCloudData();
         };
 
         const confirmDeleteEvent = () => {
             if(confirm("確定要刪除這筆行程嗎？")) {
                 dayEvents.value[selectedDayIndex.value].splice(editingIdx.value, 1);
                 modalOpen.value = false;
+                updateCloudData();
             }
         };
 
         const moveEvent = (eIdx, step) => {
             const target = eIdx + step; const arr = dayEvents.value[selectedDayIndex.value];
-            if (target >= 0 && target < arr.length) { const temp = arr[eIdx]; arr[eIdx] = arr[target]; arr[target] = temp; }
+            if (target >= 0 && target < arr.length) { 
+                const temp = arr[eIdx]; arr[eIdx] = arr[target]; arr[target] = temp; 
+                updateCloudData();
+            }
         };
 
         const uploadEventImage = (e) => { const f = e.target.files[0]; if (f) { const r = new FileReader(); r.onload = (ev) => { formEvent.value.image = ev.target.result; }; r.readAsDataURL(f); } };
-        const uploadShoppingImage = (e, sIdx) => { const f = e.target.files[0]; if (f) { const r = new FileReader(); r.onload = (ev) => { shoppingList.value[sIdx].image = ev.target.result; }; r.readAsDataURL(f); } };
-        const uploadHotelImage = (e, hIdx) => { const f = e.target.files[0]; if (f) { const r = new FileReader(); r.onload = (ev) => { hotels.value[hIdx].img = ev.target.result; }; r.readAsDataURL(f); } };
+        const uploadShoppingImage = (e, sIdx) => { const f = e.target.files[0]; if (f) { const r = new FileReader(); r.onload = (ev) => { shoppingList.value[sIdx].image = ev.target.result; updateCloudData(); }; r.readAsDataURL(f); } };
+        const uploadHotelImage = (e, hIdx) => { const f = e.target.files[0]; if (f) { const r = new FileReader(); r.onload = (ev) => { hotels.value[hIdx].img = ev.target.result; updateCloudData(); }; r.readAsDataURL(f); } };
 
-        const addShoppingItem = () => shoppingList.value.push({ name: '', image: '' });
-        const deleteShoppingItem = (idx) => shoppingList.value.splice(idx, 1);
+        const addShoppingItem = () => { shoppingList.value.push({ name: '', image: '' }); updateCloudData(); };
+        const deleteShoppingItem = (idx) => { shoppingList.value.splice(idx, 1); updateCloudData(); };
 
         const openExpenseModal = () => { formExpense.value = { category: '飲食', name: '', date: new Date().toISOString().split('T')[0], krw: null, twd: null, payer: '曾曾', shares: ['曾曾', '小陳', '涵涵', '小恩'], payMethod: '現金' }; expenseModalOpen.value = true; };
-        const saveExpenseItem = () => { formExpense.value.id = Date.now(); expenses.value.push({ ...formExpense.value }); expenseModalOpen.value = false; };
-        const deleteExpenseItem = (id) => { if(confirm("確定要移除開支嗎？")) expenses.value = expenses.value.filter(e => e.id !== id); };
+        const saveExpenseItem = () => { formExpense.value.id = Date.now(); expenses.value.push({ ...formExpense.value }); expenseModalOpen.value = false; updateCloudData(); };
+        const deleteExpenseItem = (id) => { if(confirm("確定要移除開支嗎？")) { expenses.value = expenses.value.filter(e => e.id !== id); updateCloudData(); } };
 
         const convertCurrency = (type) => {
             if (type === 'krw' && calcKrw.value) calcTwd.value = Math.round(calcKrw.value / 42);
@@ -695,26 +736,32 @@ createApp({
         };
 
         const getLuggageByCategory = (cat) => luggageItems.value.filter(l => l.category === cat);
-        const addLuggageItem = (cat) => luggageItems.value.push({ id: Date.now(), category: cat, name: '', qty: 1, checked: false });
-        const deleteLuggageItem = (id) => luggageItems.value = luggageItems.value.filter(l => l.id !== id);
+        const addLuggageItem = (cat) => { luggageItems.value.push({ id: Date.now(), category: cat, name: '', qty: 1, checked: false }); updateCloudData(); };
+        const deleteLuggageItem = (id) => { luggageItems.value = luggageItems.value.filter(l => l.id !== id); updateCloudData(); };
 
         const getCategoryEmoji = (cat) => { return { '景點': '🍊', '住宿': '🏨', '美食': '🍗', '購物': '🛍️', '航班': '✈️', '其他': '✨' }[cat] || '📍'; };
         const getCategoryBg = (cat) => { return { '景點': 'bg-orange-400', '住宿': 'bg-emerald-400', '美食': 'bg-amber-500', '購物': 'bg-purple-400', '航班': 'bg-sky-400', '其他': 'bg-stone-400' }[cat] || 'bg-stone-400'; };
         const formatNumber = (num) => Math.round(num).toLocaleString();
 
         onMounted(() => {
-            const saved = localStorage.getItem('jeju_birthday_trip_v7');
-            if (saved) {
-                try {
-                    const parsed = JSON.parse(saved);
+            // ✨ 核心：即時監聽雲端資料庫狀態雙向同步
+            docRef.onSnapshot((doc) => {
+                if (doc.exists) {
+                    const parsed = doc.data();
                     if (parsed.tripTitle) tripTitle.value = parsed.tripTitle;
                     if (parsed.dayEvents) dayEvents.value = parsed.dayEvents;
-                    if (parsed.hotels && parsed.hotels.length === 5) hotels.value = parsed.hotels;
+                    if (parsed.hotels) hotels.value = parsed.hotels;
                     if (parsed.shoppingList) shoppingList.value = parsed.shoppingList;
                     if (parsed.expenses) expenses.value = parsed.expenses;
                     if (parsed.luggageItems) luggageItems.value = parsed.luggageItems;
-                } catch(e) { console.error(e); }
-            }
+                    if (parsed.cloudPaidSettlements) cloudPaidSettlements.value = parsed.cloudPaidSettlements;
+                } else {
+                    // 若雲端完全沒有初始資料，則將目前的預設資料初次推送上去
+                    updateCloudData();
+                }
+            }, (error) => {
+                console.error("讀取雲端即時同步失敗，請檢查規則權限：", error);
+            });
         });
 
         return {
@@ -724,7 +771,8 @@ createApp({
             openAddModal, openEditModal, saveEvent, confirmDeleteEvent, moveEvent,
             uploadEventImage, uploadShoppingImage, uploadHotelImage, addShoppingItem, deleteShoppingItem,
             openExpenseModal, saveExpenseItem, deleteExpenseItem, convertCurrency, syncExpenseCurrency,
-            getLuggageByCategory, addLuggageItem, deleteLuggageItem, getCategoryEmoji, getCategoryBg, formatNumber, shareData
+            getLuggageByCategory, addLuggageItem, deleteLuggageItem, getCategoryEmoji, getCategoryBg, formatNumber,
+            updateCloudData, toggleSettlementPaid, copyShareLink
         };
     }
 }).mount('#app');

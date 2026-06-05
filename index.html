@@ -69,6 +69,22 @@
             touch-action: none;
             user-select: none;
         }
+        
+        /* 拖曳排序相關特效 */
+        .shopping-grid {
+            position: relative;
+        }
+        .shopping-item-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            touch-action: none; /* 阻止手機預設滾動，利於長按拖動 */
+        }
+        .shopping-item-card.is-dragging {
+            opacity: 0.7;
+            transform: scale(1.05);
+            z-index: 50;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            border-color: #f97316;
+        }
     </style>
 </head>
 <body class="text-stone-800 antialiased select-none">
@@ -360,13 +376,24 @@
         </div>
 
         <div v-if="currentTab === 'shopping'" class="space-y-4">
-            <div class="grid grid-cols-2 gap-3">
-                <div v-for="(item, sIdx) in shoppingList" :key="sIdx" class="handbook-card overflow-hidden bg-white flex flex-col transition-all duration-300 relative">
+            <div class="text-center text-[11px] text-orange-600/80 font-bold bg-orange-50 py-1 rounded-xl border border-orange-100">
+                💡 提示：長按卡片 0.5 秒即可上下拖曳調整排序哦！
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3 shopping-grid">
+                <div v-for="(item, sIdx) in shoppingList" 
+                     :key="sIdx" 
+                     :data-index="sIdx"
+                     @touchstart="handleShoppingTouchStart($event, sIdx)"
+                     @touchmove="handleShoppingTouchMove($event)"
+                     @touchend="handleShoppingTouchEnd($event)"
+                     :class="['shopping-item-card', 'handbook-card', 'overflow-hidden', 'bg-white', 'flex', 'flex-col', 'relative', draggingShoppingIndex === sIdx ? 'is-dragging' : '']">
+                    
                     <button @click="deleteShoppingItem(sIdx)" class="absolute top-2 right-2 w-5 h-5 bg-stone-900/60 text-white rounded-full flex items-center justify-center text-[10px] cursor-pointer hover:bg-red-500 z-30 transition">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                     <div class="w-full h-32 bg-[#FAF7F2] overflow-hidden border-b-2 border-dashed border-[#E2D3B7] flex items-center justify-center relative shadow-inner group flex-shrink-0">
-                        <img v-if="item.image" :src="item.image" class="w-full h-full object-cover object-center transition duration-300 group-hover:scale-105">
+                        <img v-if="item.image" :src="item.image" class="w-full h-full object-cover object-center transition duration-300 group-hover:scale-105 pointer-events-none">
                         <div v-else class="text-center text-stone-400 p-2 pointer-events-none">
                             <i class="fa-solid fa-camera text-xl mb-1 text-orange-300"></i>
                             <div class="text-[10px] font-bold">上傳商品照片</div>
@@ -623,7 +650,11 @@ createApp({
         const calcKrw = ref(null);
         const calcTwd = ref(null);
 
-        // 新增天氣響應式變數（初始預設值）
+        // 長按排序響應式變數
+        const draggingShoppingIndex = ref(null);
+        let longPressTimer = null;
+        let isLongPressed = false;
+
         const weatherData = ref({
             temp: '--',
             feelsLike: '--',
@@ -631,13 +662,10 @@ createApp({
             icon: '🔄'
         });
 
-        // 串接免費 OpenWeatherMap API 邏輯與中文/手帳手繪圖示映射
         const fetchJejuWeather = async () => {
             try {
-                // 濟州島經緯度 (Jeju City)
                 const lat = 33.4996;
                 const lon = 126.5312;
-                // 使用免費免申請免簽名的客製天氣中繼服務節點（已轉換為公用免費 Key 避免限制）
                 const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=1598f480da0f2bf2a4f6cf7ef451f28b&lang=zh_tw`);
                 
                 if (!res.ok) throw new Error('API 無法載入');
@@ -647,24 +675,23 @@ createApp({
                 let customIcon = '🌤️';
                 let customDesc = data.weather[0].description;
 
-                // 精準分類對應你的手帳風樣式
                 if (weatherId >= 200 && weatherId <= 232) {
-                    customIcon = '⛈️'; // 雷雨
+                    customIcon = '⛈️';
                     customDesc = '狂風暴雨 · 先去咖啡廳躲躲吧';
                 } else if (weatherId >= 300 && weatherId <= 531) {
-                    customIcon = '🌧️'; // 颳風下雨 / 雨天
+                    customIcon = '🌧️';
                     customDesc = '細雨綿綿 · 出門記得攜帶雨具';
                 } else if (weatherId >= 600 && weatherId <= 622) {
-                    customIcon = '❄️'; // 下雪
+                    customIcon = '❄️';
                     customDesc = '唯美冬雪 · 濟州島下雪囉';
                 } else if (weatherId === 800) {
-                    customIcon = '☀️'; // 大太陽 / 晴天
+                    customIcon = '☀️';
                     customDesc = '豔陽高照 · 超適合拍網美照';
                 } else if (weatherId === 801 || weatherId === 802) {
-                    customIcon = '🌤️'; // 晴時多雲
+                    customIcon = '🌤️';
                     customDesc = '晴時多雲 · 湛藍海邊景緻';
                 } else if (weatherId >= 803) {
-                    customIcon = '☁️'; // 陰天
+                    customIcon = '☁️';
                     customDesc = '陰天多雲 · 涼爽舒服的好天氣';
                 }
 
@@ -676,7 +703,6 @@ createApp({
                 };
             } catch (err) {
                 console.error("即時天氣更新失敗，切換為本地預設值:", err);
-                // 失敗時保持好看的靜態預設
                 weatherData.value = { temp: '23', feelsLike: '21.5', description: '晴時多雲 · 湛藍海邊景緻', icon: '🌤️' };
             }
         };
@@ -944,6 +970,69 @@ createApp({
         const addShoppingItem = () => { shoppingList.value.push({ name: '', image: '', purchased: false }); updateCloudData(); };
         const deleteShoppingItem = (idx) => { shoppingList.value.splice(idx, 1); updateCloudData(); };
 
+        // 購物清單長按並移動排序邏輯 (Touch 事件優化)
+        const handleShoppingTouchStart = (e, index) => {
+            // 排除點擊「刪除按鈕」或「輸入框」或「勾選狀態」觸發的長按
+            if (e.target.closest('button') || e.target.closest('input') || e.target.closest('label')) return;
+            
+            isLongPressed = false;
+            draggingShoppingIndex.value = index;
+
+            // 設定 500 毫秒後判定為長按
+            longPressTimer = setTimeout(() => {
+                isLongPressed = true;
+                // 振動回饋提示使用者進入排序模式 (部分行動裝置支援)
+                if (navigator.vibrate) navigator.vibrate(50);
+            }, 500);
+        };
+
+        const handleShoppingTouchMove = (e) => {
+            if (draggingShoppingIndex.value === null) return;
+
+            // 如果尚未達到長按時間就移動了，取消計時器（視為普通網頁滾動）
+            if (!isLongPressed) {
+                clearTimeout(longPressTimer);
+                draggingShoppingIndex.value = null;
+                return;
+            }
+
+            // 進入排序拖曳狀態後，阻止頁面原生滾動
+            e.preventDefault();
+
+            // 取得觸控點當前的 Y / X 座標
+            const touch = e.touches[0];
+            
+            // 透過 elementFromPoint 找出手指目前壓在畫面上的哪一個 DOM 物件上
+            const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (!targetEl) return;
+
+            // 尋找當前觸碰點下是否有鄰近的購物小卡片項目
+            const currentItemEl = targetEl.closest('.shopping-item-card');
+            if (currentItemEl && currentItemEl.dataset.index !== undefined) {
+                const targetIndex = parseInt(currentItemEl.dataset.index, 10);
+                
+                // 如果目標索引與當前拖動的索引不同，則進行即時位置交換
+                if (targetIndex !== draggingShoppingIndex.value) {
+                    const temp = shoppingList.value[draggingShoppingIndex.value];
+                    shoppingList.value[draggingShoppingIndex.value] = shoppingList.value[targetIndex];
+                    shoppingList.value[targetIndex] = temp;
+                    
+                    // 重新聚焦當前被拖曳的物件索引
+                    draggingShoppingIndex.value = targetIndex;
+                }
+            }
+        };
+
+        const handleShoppingTouchEnd = (e) => {
+            clearTimeout(longPressTimer);
+            if (isLongPressed && draggingShoppingIndex.value !== null) {
+                // 結束拖曳後，立刻同步回傳雲端 Firebase 資料庫
+                updateCloudData();
+            }
+            draggingShoppingIndex.value = null;
+            isLongPressed = false;
+        };
+
         const openExpenseModal = () => { formExpense.value = { category: '飲食', name: '', date: new Date().toISOString().split('T')[0], krw: null, twd: null, payer: '曾曾', shares: ['曾曾', '小陳', '涵涵', '小恩'], payMethod: '現金' }; expenseModalOpen.value = true; };
         const saveExpenseItem = () => { formExpense.value.id = Date.now(); expenses.value.push({ ...formExpense.value }); expenseModalOpen.value = false; updateCloudData(); };
         const deleteExpenseItem = (id) => { if(confirm("確定要移除開支嗎？")) { expenses.value = expenses.value.filter(e => e.id !== id); updateCloudData(); } };
@@ -966,7 +1055,6 @@ createApp({
         const formatNumber = (num) => Math.round(num).toLocaleString();
 
         onMounted(() => {
-            // 初始化時呼叫天氣 API
             fetchJejuWeather();
 
             docRef.onSnapshot((doc) => {
@@ -991,8 +1079,9 @@ createApp({
             currentTab, tripTitle, selectedDayIndex, days, dayEvents, hotels, shoppingList, expenses, luggageItems,
             calcKrw, calcTwd, modalOpen, isEditMode, formEvent, expenseModalOpen, formExpense, currentDayEvents,
             sortedExpenses, totalTwd, totalKrw, computedSettlements, settlementDone, editingIdx, weatherData,
+            draggingShoppingIndex,
             openAddModal, openEditModal, saveEvent, confirmDeleteEvent, moveEvent,
-            addShoppingItem, deleteShoppingItem,
+            addShoppingItem, deleteShoppingItem, handleShoppingTouchStart, handleShoppingTouchMove, handleShoppingTouchEnd,
             openExpenseModal, saveExpenseItem, deleteExpenseItem, convertCurrency, syncExpenseCurrency,
             getLuggageByCategory, addLuggageItem, deleteLuggageItem, getCategoryEmoji, getCategoryBg, formatNumber,
             updateCloudData, toggleSettlementPaid, copyShareLink,

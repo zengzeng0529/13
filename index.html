@@ -377,7 +377,7 @@
 
         <div v-if="currentTab === 'shopping'" class="space-y-4">
             <div class="text-center text-[11px] text-orange-600/80 font-bold bg-orange-50 py-1 rounded-xl border border-orange-100">
-                💡 提示：長按卡片 0.5 秒即可上下拖曳調整排序哦！
+                💡 提示：長按整個商品小卡片即可上下自由拖曳調整排序哦！
             </div>
             
             <div class="grid grid-cols-2 gap-3 shopping-grid">
@@ -392,14 +392,19 @@
                     <button @click="deleteShoppingItem(sIdx)" class="absolute top-2 right-2 w-5 h-5 bg-stone-900/60 text-white rounded-full flex items-center justify-center text-[10px] cursor-pointer hover:bg-red-500 z-30 transition">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
+                    
                     <div class="w-full h-32 bg-[#FAF7F2] overflow-hidden border-b-2 border-dashed border-[#E2D3B7] flex items-center justify-center relative shadow-inner group flex-shrink-0">
                         <img v-if="item.image" :src="item.image" class="w-full h-full object-cover object-center transition duration-300 group-hover:scale-105 pointer-events-none">
                         <div v-else class="text-center text-stone-400 p-2 pointer-events-none">
                             <i class="fa-solid fa-camera text-xl mb-1 text-orange-300"></i>
                             <div class="text-[10px] font-bold">上傳商品照片</div>
                         </div>
-                        <input type="file" accept="image/*" @change="triggerCropModal($event, sIdx, 'shopping')" class="absolute inset-0 opacity-0 cursor-pointer z-20">
+                        
+                        <div class="absolute inset-0 z-10">
+                            <input type="file" accept="image/*" @change="triggerCropModal($event, sIdx, 'shopping')" class="absolute inset-0 opacity-0 cursor-pointer">
+                        </div>
                     </div>
+                    
                     <div class="p-2.5 flex flex-col justify-between flex-1 gap-2">
                         <input type="text" v-model="item.name" @change="updateCloudData" class="w-full text-xs font-bold bg-stone-50/80 p-1.5 rounded-lg focus:outline-none border border-transparent focus:border-orange-200 text-stone-800" placeholder="🍊 商品名稱...">
                         <div class="flex items-center justify-center">

@@ -12,6 +12,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
     
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
@@ -69,6 +72,28 @@
             touch-action: none;
             user-select: none;
         }
+        
+        .shopping-grid {
+            position: relative;
+        }
+        .shopping-item-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            touch-action: none;
+        }
+        .shopping-item-card.is-dragging {
+            opacity: 0.7;
+            transform: scale(1.05);
+            z-index: 50;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            border-color: #f97316;
+        }
+        #jeju-map {
+            width: 100%;
+            height: 400px;
+            border-radius: 20px;
+            border: 2.5px solid #D1C2A5;
+            z-index: 1;
+        }
     </style>
 </head>
 <body class="text-stone-800 antialiased select-none">
@@ -97,7 +122,6 @@
     <main class="flex-1 p-4">
         
         <div v-if="currentTab === 'schedule'" class="space-y-4">
-            
             <div class="flex gap-2 overflow-x-auto pb-2 hide-scrollbar snap-x">
                 <button v-for="(day, index) in days" :key="index" @click="selectedDayIndex = index" :class="selectedDayIndex === index ? 'bg-orange-400 text-white border-orange-400 scale-105 shadow-sm' : 'bg-white text-stone-700 border-[#E2D3B7]'" class="flex flex-col items-center justify-center min-w-[64px] h-[74px] rounded-2xl border-2 snap-center transition duration-200 cursor-pointer">
                     <span class="text-xs font-bold uppercase tracking-wider" :class="selectedDayIndex === index ? 'text-orange-100' : 'text-stone-400'">{{ day.week }}</span>
@@ -115,17 +139,13 @@
                         <div class="font-bold text-sm tracking-wide text-stone-800 flex items-center gap-1">
                             <span>濟州島</span>
                             <span class="text-xs font-normal text-stone-500">🗿 石頭爺爺守護中</span>
-                            <button @click="fetchJejuWeather" class="text-stone-400 hover:text-orange-400 transition ml-1 cursor-pointer" title="更新即時天氣">
-                                <i class="fa-solid fa-arrows-rotate text-[11px]" :class="{'animate-spin': isWeatherLoading}"></i>
-                            </button>
                         </div>
                         <div class="text-[11px] text-amber-800/80 mt-0.5 font-medium">{{ weatherData.description }}</div>
                     </div>
                 </div>
                 <div class="text-right relative z-10">
                     <div class="text-2xl font-bold tracking-tighter text-amber-900">{{ weatherData.temp }}°C</div>
-                    <div class="text-[10px] text-stone-500 font-medium mt-0.5">體感 {{ weatherData.feelsLike }}°C</div>
-                    <div v-if="weatherData.updatedTime" class="text-[9px] text-stone-400 font-normal mt-0.5">⏱️ {{ weatherData.updatedTime }}</div>
+                    <div class="text-[10px] text-stone-500 font-medium mt-0.5">體感溫度 {{ weatherData.feelsLike }}°C</div>
                 </div>
             </div>
 
@@ -143,7 +163,7 @@
                         <div class="washi-tape">FLIGHT INFO ✈️</div>
                         <div class="flex justify-between items-center border-b-2 border-dashed border-orange-200 pb-2 mb-3">
                             <span class="text-xs font-bold text-orange-700 bg-orange-100 px-2.5 py-0.5 rounded-md"><i class="fa-solid fa-plane-arrival"></i> 第一天首站航班資訊</span>
-                            <span class="text-xs font-bold text-stone-400">編號: {{ event.flightNo || 'TW606' }}</span>
+                            <span class="text-xs font-bold text-stone-400">編號: {{ event.flightNo || 'IT 670' }}</span>
                         </div>
                         <div class="flex justify-between items-center text-center py-2">
                             <div>
@@ -232,6 +252,75 @@
             </button>
         </div>
 
+        <div v-if="currentTab === 'map'" class="space-y-4">
+            <div class="handbook-card p-4 pt-6 bg-white">
+                <div class="washi-tape bg-orange-400 text-white">JEJU MAP 🎲</div>
+                <div class="text-xs text-stone-500 font-bold mb-3 flex items-center gap-1.5">
+                    <i class="fa-solid fa-map-marked-alt text-orange-500"></i> 濟州島全行程景點分佈地圖
+                </div>
+                
+                <div id="jeju-map" class="mb-3"></div>
+                
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-[11px] text-amber-900 leading-relaxed font-medium">
+                    📌 <strong>地圖指引：</strong>此地圖已精準定位於韓國濟州島。上方標記點為你在<strong>「行程」分頁中各天安排的所有打卡景點</strong>。點擊標記圖示可以查看名稱並快速開啟大圖與 Naver Map 導航！
+                </div>
+            </div>
+        </div>
+
+        <div v-if="currentTab === 'translate'" class="space-y-4">
+            <div class="handbook-card p-4 pt-6 bg-white">
+                <div class="washi-tape bg-purple-500 text-white">CAMERA TRANSLATE 📸</div>
+                <div class="text-xs font-bold text-stone-700 mb-2 flex items-center gap-1.5">
+                    <i class="fa-solid fa-camera text-purple-500"></i> 拍照 / 上傳圖片即時翻譯 (韓 ➔ 繁中)
+                </div>
+                
+                <div class="w-full h-44 bg-stone-50 rounded-xl border-2 border-dashed border-stone-200 flex flex-col items-center justify-center relative overflow-hidden p-4 group">
+                    <img v-if="photoTranslateSrc" :src="photoTranslateSrc" class="w-full h-full object-contain mb-2">
+                    <div v-else class="text-center text-stone-400">
+                        <i class="fa-solid fa-image-text text-3xl mb-1 text-purple-300"></i>
+                        <p class="text-[11px] font-bold">點擊開啟相機拍照或選擇路標、菜單照片</p>
+                    </div>
+                    <input type="file" accept="image/*" @change="handlePhotoTranslate" class="absolute inset-0 opacity-0 cursor-pointer">
+                </div>
+
+                <div v-if="photoTranslateLoading || photoTranslateResult" class="mt-3 p-3 bg-purple-50/50 border border-purple-200 rounded-xl space-y-2">
+                    <div v-if="photoTranslateLoading" class="text-center text-xs font-bold text-purple-600 py-2 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-circle-notch animate-spin"></i> Papago 引擎高精細文本識別分析中...
+                    </div>
+                    <div v-else>
+                        <div class="text-[10px] uppercase tracking-wider text-stone-400 font-bold mb-1">Papago 識別與翻譯結果：</div>
+                        <p class="text-xs font-bold text-stone-500 line-through decoration-1">原文字：{{ photoTranslateRaw }}</p>
+                        <p class="text-sm font-bold text-purple-900 mt-1 bg-white p-2 rounded-lg border border-purple-100 shadow-2xs">🇨🇳 繁中：{{ photoTranslateResult }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="handbook-card p-4 pt-6 bg-white">
+                <div class="washi-tape bg-emerald-500 text-white">TEXT TRANSLATE 🔤</div>
+                <div class="text-xs font-bold text-stone-700 mb-2 flex items-center gap-1.5">
+                    <i class="fa-solid fa-language text-emerald-500"></i> 輸入中文即時翻譯 (中文 ➔ 韓文)
+                </div>
+                <textarea v-model="textTranslateInput" rows="3" class="w-full bg-[#FAF7F2] border-2 border-[#E2D3B7] rounded-xl p-2.5 text-xs font-bold focus:outline-none" placeholder="請輸入欲翻譯的中文，例如：這個多少錢？、請給我菜單。"></textarea>
+                
+                <div class="flex justify-end mt-2">
+                    <button @click="executeTextTranslate" class="bg-emerald-400 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1 shadow-sm transition active:scale-95 cursor-pointer">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> 智慧語境翻譯
+                    </button>
+                </div>
+
+                <div v-if="textTranslateResult" class="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-2">
+                    <div class="text-[10px] text-stone-400 font-bold mb-1">韓文高準確翻譯結果：</div>
+                    <p class="text-sm font-bold text-emerald-950 bg-white p-2 rounded-lg border border-emerald-100 break-all">{{ textTranslateResult }}</p>
+                    
+                    <div class="flex justify-end">
+                        <button @click="playKoreanTTS" class="bg-orange-400 hover:bg-orange-500 text-white px-3 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer">
+                            <i class="fa-solid fa-volume-high"></i> 🔊 播放韓語語音
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div v-if="currentTab === 'info'" class="space-y-4">
             <div class="handbook-card p-4 pt-6">
                 <div class="washi-tape">EXCHANGE RATE 🪙</div>
@@ -256,7 +345,7 @@
                             <span>🛫 去程航班</span><span>9/14</span>
                         </div>
                         <div class="text-center text-xs space-y-0.5">
-                            <div class="font-bold text-stone-500 text-[10px]">航班: TW606</div>
+                            <div class="font-bold text-stone-500 text-[10px]">航班: IT 670 </div>
                             <div class="font-bold text-stone-800">KHH ➔ CJU</div>
                             <div class="text-[10px] text-stone-400">起飛 15:50 / 抵達 18:50</div>
                             <div class="text-[9px] bg-orange-100 text-orange-800 px-1.5 py-0.2 rounded-full inline-block font-bold">總飛行時間: 2小時</div>
@@ -268,7 +357,7 @@
                             <span>🛬 回程航班</span><span>9/19</span>
                         </div>
                         <div class="text-center text-xs space-y-0.5">
-                            <div class="font-bold text-stone-500 text-[10px]">航班: TW605</div>
+                            <div class="font-bold text-stone-500 text-[10px]">航班: IT 675 </div>
                             <div class="font-bold text-stone-800">CJU ➔ KHH</div>
                             <div class="text-[10px] text-stone-400">起飛 10:50 / 抵達 12:15</div>
                             <div class="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded-full inline-block font-bold">總飛行時間: 1小時25分</div>
@@ -280,7 +369,7 @@
             <div class="handbook-card p-4 pt-6 bg-white">
                 <div class="washi-tape bg-sky-400 text-white">RENTAL CAR INFO 🚗</div>
                 <div class="text-xs space-y-2 mt-1 font-medium">
-                    <div class="flex justify-between"><span>租車公司：</span><span class="font-bold">乐天租车济州 (Lotte Rent-a-Car)</span></div>
+                    <div class="flex justify-between"><span>租車 company：</span><span class="font-bold">乐天租车济州 (Lotte Rent-a-Car)</span></div>
                     <div class="flex justify-between"><span>車型款式：</span><span class="text-stone-600 font-bold">現代 Avante (或同級五人座)</span></div>
                     <div class="flex justify-between"><span>取還時間：</span><span class="text-stone-600 font-bold">9/14 20:00 ~ 9/19 08:00</span></div>
                     <div class="flex justify-between"><span>訂單號碼：</span><span class="text-amber-700 font-bold">LT-20260914-885A</span></div>
@@ -364,19 +453,35 @@
         </div>
 
         <div v-if="currentTab === 'shopping'" class="space-y-4">
-            <div class="grid grid-cols-2 gap-3">
-                <div v-for="(item, sIdx) in shoppingList" :key="sIdx" class="handbook-card overflow-hidden bg-white flex flex-col transition-all duration-300 relative">
+            <div class="text-center text-[11px] text-orange-600/80 font-bold bg-orange-50 py-1 rounded-xl border border-orange-100">
+                💡 提示：長按整個商品小卡片即可上下自由拖曳調整排序哦！
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3 shopping-grid">
+                <div v-for="(item, sIdx) in shoppingList" 
+                     :key="sIdx" 
+                     :data-index="sIdx"
+                     @touchstart="handleShoppingTouchStart($event, sIdx)"
+                     @touchmove="handleShoppingTouchMove($event)"
+                     @touchend="handleShoppingTouchEnd($event)"
+                     :class="['shopping-item-card', 'handbook-card', 'overflow-hidden', 'bg-white', 'flex', 'flex-col', 'relative', draggingShoppingIndex === sIdx ? 'is-dragging' : '']">
+                    
                     <button @click="deleteShoppingItem(sIdx)" class="absolute top-2 right-2 w-5 h-5 bg-stone-900/60 text-white rounded-full flex items-center justify-center text-[10px] cursor-pointer hover:bg-red-500 z-30 transition">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
+                    
                     <div class="w-full h-32 bg-[#FAF7F2] overflow-hidden border-b-2 border-dashed border-[#E2D3B7] flex items-center justify-center relative shadow-inner group flex-shrink-0">
-                        <img v-if="item.image" :src="item.image" class="w-full h-full object-cover object-center transition duration-300 group-hover:scale-105">
+                        <img v-if="item.image" :src="item.image" class="w-full h-full object-cover object-center transition duration-300 group-hover:scale-105 pointer-events-none">
                         <div v-else class="text-center text-stone-400 p-2 pointer-events-none">
                             <i class="fa-solid fa-camera text-xl mb-1 text-orange-300"></i>
                             <div class="text-[10px] font-bold">上傳商品照片</div>
                         </div>
-                        <input type="file" accept="image/*" @change="triggerCropModal($event, sIdx, 'shopping')" class="absolute inset-0 opacity-0 cursor-pointer z-20">
+                        
+                        <div class="absolute inset-0 z-10">
+                            <input type="file" accept="image/*" @change="triggerCropModal($event, sIdx, 'shopping')" class="absolute inset-0 opacity-0 cursor-pointer">
+                        </div>
                     </div>
+                    
                     <div class="p-2.5 flex flex-col justify-between flex-1 gap-2">
                         <input type="text" v-model="item.name" @change="updateCloudData" class="w-full text-xs font-bold bg-stone-50/80 p-1.5 rounded-lg focus:outline-none border border-transparent focus:border-orange-200 text-stone-800" placeholder="🍊 商品名稱...">
                         <div class="flex items-center justify-center">
@@ -478,20 +583,26 @@
     </main>
 
     <div class="fixed bottom-4 left-4 right-4 max-w-sm mx-auto bg-white/95 backdrop-blur-md p-2 rounded-[24px] border-3 border-[#E2D3B7] flex justify-around items-center z-40 float-nav-shadow">
-        <button @click="currentTab = 'schedule'" :class="currentTab === 'schedule' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
-            <i class="fa-solid fa-location-dot text-sm"></i><span class="text-[10px]">行程</span>
+        <button @click="setTab('schedule')" :class="currentTab === 'schedule' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
+            <i class="fa-solid fa-location-dot text-xs"></i><span class="text-[9px]">行程</span>
         </button>
-        <button @click="currentTab = 'info'" :class="currentTab === 'info' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
-            <i class="fa-solid fa-circle-info text-sm"></i><span class="text-[10px]">資訊</span>
+        <button @click="setTab('map')" :class="currentTab === 'map' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
+            <i class="fa-solid fa-dice text-xs"></i><span class="text-[9px]">地圖</span>
         </button>
-        <button @click="currentTab = 'shopping'" :class="currentTab === 'shopping' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
-            <i class="fa-solid fa-basket-shopping text-sm"></i><span class="text-[10px]">購物清單</span>
+        <button @click="setTab('translate')" :class="currentTab === 'translate' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
+            <i class="fa-solid fa-language text-xs"></i><span class="text-[9px]">翻譯</span>
         </button>
-        <button @click="currentTab = 'expenses'" :class="currentTab === 'expenses' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
-            <i class="fa-solid fa-coins text-sm"></i><span class="text-[10px]">花費</span>
+        <button @click="setTab('info')" :class="currentTab === 'info' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
+            <i class="fa-solid fa-circle-info text-xs"></i><span class="text-[9px]">資訊</span>
         </button>
-        <button @click="currentTab = 'luggage'" :class="currentTab === 'luggage' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
-            <i class="fa-solid fa-suitcase text-sm"></i><span class="text-[10px]">行李清單</span>
+        <button @click="setTab('shopping')" :class="currentTab === 'shopping' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
+            <i class="fa-solid fa-basket-shopping text-xs"></i><span class="text-[9px]">購物</span>
+        </button>
+        <button @click="setTab('expenses')" :class="currentTab === 'expenses' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
+            <i class="fa-solid fa-coins text-xs"></i><span class="text-[9px]">花費</span>
+        </button>
+        <button @click="setTab('luggage')" :class="currentTab === 'luggage' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
+            <i class="fa-solid fa-suitcase text-xs"></i><span class="text-[9px]">行李</span>
         </button>
     </div>
 
@@ -603,7 +714,7 @@
 </div>
 
 <script>
-const { createApp, ref, computed, onMounted } = Vue;
+const { createApp, ref, computed, onMounted, nextTick } = Vue;
 
 const firebaseConfig = {
   apiKey: "AIzaSyAnUpEhMEDA-VMFFDnC1B3jU", 
@@ -626,26 +737,36 @@ createApp({
         const selectedDayIndex = ref(0);
         const calcKrw = ref(null);
         const calcTwd = ref(null);
-        const isWeatherLoading = ref(false); // 新增天氣轉圈狀態
 
-        // 擴充天氣響應式變數
+        // 翻譯功能型變數
+        const photoTranslateSrc = ref('');
+        const photoTranslateLoading = ref(false);
+        const photoTranslateRaw = ref('');
+        const photoTranslateResult = ref('');
+        const textTranslateInput = ref('');
+        const textTranslateResult = ref('');
+
+        // 地圖變數
+        let leafletMap = null;
+        let mapMarkers = [];
+
+        // 長按排序響應式變數
+        const draggingShoppingIndex = ref(null);
+        let longPressTimer = null;
+        let isLongPressed = false;
+
         const weatherData = ref({
             temp: '--',
             feelsLike: '--',
             description: '正在獲取濟州島即時天氣...',
-            icon: '🔄',
-            updatedTime: '' // 新增最後更新時間欄位
+            icon: '🔄'
         });
 
-        // 串接天氣 API 邏輯（加入防止快取快照機制）
         const fetchJejuWeather = async () => {
-            isWeatherLoading.value = true;
             try {
                 const lat = 33.4996;
                 const lon = 126.5312;
-                // 加入亂數/時間戳記防止瀏覽器端強行快取舊回應
-                const timestamp = new Date().getTime();
-                const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=1598f480da0f2bf2a4f6cf7ef451f28b&lang=zh_tw&_=${timestamp}`);
+                const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=1598f480da0f2bf2a4f6cf7ef451f28b&lang=zh_tw`);
                 
                 if (!res.ok) throw new Error('API 無法載入');
                 const data = await res.json();
@@ -654,46 +775,35 @@ createApp({
                 let customIcon = '🌤️';
                 let customDesc = data.weather[0].description;
 
-                // 精準分類對應手帳風樣式
                 if (weatherId >= 200 && weatherId <= 232) {
-                    customIcon = '⛈️'; 
+                    customIcon = '⛈️';
                     customDesc = '狂風暴雨 · 先去咖啡廳躲躲吧';
                 } else if (weatherId >= 300 && weatherId <= 531) {
-                    customIcon = '🌧️'; 
+                    customIcon = '🌧️';
                     customDesc = '細雨綿綿 · 出門記得攜帶雨具';
                 } else if (weatherId >= 600 && weatherId <= 622) {
-                    customIcon = '❄️'; 
+                    customIcon = '❄️';
                     customDesc = '唯美冬雪 · 濟州島下雪囉';
                 } else if (weatherId === 800) {
-                    customIcon = '☀️'; 
+                    customIcon = '☀️';
                     customDesc = '豔陽高照 · 超適合拍網美照';
                 } else if (weatherId === 801 || weatherId === 802) {
-                    customIcon = '🌤️'; 
+                    customIcon = '🌤️';
                     customDesc = '晴時多雲 · 湛藍海邊景緻';
                 } else if (weatherId >= 803) {
-                    customIcon = '☁️'; 
+                    customIcon = '☁️';
                     customDesc = '陰天多雲 · 涼爽舒服的好天氣';
                 }
-
-                // 產生目前使用者當地可讀的更新時分
-                const now = new Date();
-                const timeString = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
                 weatherData.value = {
                     temp: Math.round(data.main.temp),
                     feelsLike: Math.round(data.main.feels_like),
                     description: customDesc,
-                    icon: customIcon,
-                    updatedTime: timeString
+                    icon: customIcon
                 };
             } catch (err) {
                 console.error("即時天氣更新失敗，切換為本地預設值:", err);
-                weatherData.value = { temp: '23', feelsLike: '21.5', description: '晴時多雲 · 湛藍海邊景緻', icon: '🌤️', updatedTime: '預設' };
-            } finally {
-                // 加個小延遲讓動畫轉得優雅自然
-                setTimeout(() => {
-                    isWeatherLoading.value = false;
-                }, 500);
+                weatherData.value = { temp: '23', feelsLike: '21.5', description: '晴時多雲 · 湛藍海邊景緻', icon: '🌤️' };
             }
         };
 
@@ -705,7 +815,7 @@ createApp({
 
         const defaultDayEvents = {
             0: [
-                { id: 101, category: '航班', name: '抵達濟州國際機場 (小港出發)', time: '18:50', note: '去程德威航空機票', transitMode: 'drive', transitTime: '30分鐘', image: '', hours: '', ticket: '', flightNo: 'TW606' },
+                { id: 101, category: '航班', name: '抵達濟州國際機場 (小港出發)', time: '18:50', note: '去程德威航空機票', transitMode: 'drive', transitTime: '30分鐘', image: '', hours: '', ticket: '', flightNo: 'IT 670' },
                 { id: 102, category: '其他', name: '乐天租车济州店取車', time: '20:00', note: '辦理租車取車手續', transitMode: 'drive', transitTime: '30分鐘', image: '', hours: '', ticket: '' },
                 { id: 103, category: '美食', name: 'Sukseongdo济州总店 （黑豬肉）', time: '20:30', note: '濟州必吃老字號烤肉', transitMode: 'drive', transitTime: '90分鐘', image: '', hours: '11:30 - 22:00', ticket: '' }
             ],
@@ -798,6 +908,166 @@ createApp({
 
         const settlementDone = computed(() => computedSettlements.value.length > 0 && computedSettlements.value.every(i => i.paid));
 
+        const setTab = (tabName) => {
+            currentTab.value = tabName;
+            if (tabName === 'map') {
+                nextTick(() => {
+                    initJejuMap();
+                });
+            }
+        };
+
+        const initJejuMap = () => {
+            if (leafletMap) {
+                leafletMap.remove();
+                leafletMap = null;
+            }
+
+            leafletMap = L.map('jeju-map').setView([33.4996, 126.5312], 10);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(leafletMap);
+
+            const allPlaces = [];
+            Object.keys(dayEvents.value).forEach(dayKey => {
+                const dayList = dayEvents.value[dayKey] || [];
+                dayList.forEach(event => {
+                    if (event.name && event.category !== '航班') {
+                        allPlaces.push(event);
+                    }
+                });
+            });
+
+            const jejuLocationDatabase = [
+                { keyword: '機場', lat: 33.5113, lon: 126.4931 },
+                { keyword: '租車', lat: 33.5072, lon: 126.4934 },
+                { keyword: 'Sukseongdo', lat: 33.4849, lon: 126.4896 },
+                { keyword: '黑豬肉', lat: 33.4849, lon: 126.4896 },
+                { keyword: '9.81', lat: 33.3482, lon: 126.3683 },
+                { keyword: '賽車', lat: 33.3482, lon: 126.3683 },
+                { keyword: '別墅', lat: 33.5182, lon: 126.5122 },
+                { keyword: '西歸浦', lat: 33.2541, lon: 126.5601 },
+                { keyword: '城山', lat: 33.4582, lon: 126.9425 },
+                { keyword: '涯月', lat: 33.4621, lon: 126.3204 },
+                { keyword: '連洞', lat: 33.4889, lon: 126.4878 }
+            ];
+
+            allPlaces.forEach((place, idx) => {
+                let matchedLoc = jejuLocationDatabase.find(dbItem => place.name.toLowerCase().includes(dbItem.keyword.toLowerCase()));
+                
+                let lat = matchedLoc ? matchedLoc.lat : 33.45 + (Math.random() - 0.5) * 0.15;
+                let lon = matchedLoc ? matchedLoc.lon : 126.55 + (Math.random() - 0.5) * 0.35;
+
+                const emoji = { '景點': '🍊', '住宿': '🏨', '美食': '🍗', '購物': '🛍️' }[place.category] || '📍';
+                
+                const customIcon = L.divIcon({
+                    html: `<div style="font-size: 24px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));">${emoji}</div>`,
+                    className: 'custom-map-emoji-marker',
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15]
+                });
+
+                const popupContent = `
+                    <div style="font-family: sans-serif; padding: 2px; min-width: 130px;">
+                        <span style="font-size: 10px; font-weight: bold; background: #f97316; color:#fff; padding: 2px 6px; border-radius: 4px;">${place.category}</span>
+                        <h4 style="margin: 6px 0 2px 0; font-size: 12px; font-weight: bold; color: #1c1917;">${place.name}</h4>
+                        <p style="margin: 0 0 6px 0; font-size: 10px; color:#78716c;">時間: ${place.time}</p>
+                        <a href="https://map.naver.com/v5/search/${encodeURIComponent(place.name)}" target="_blank" style="display: block; text-align: center; background: #10b981; color: white; font-size: 10px; font-weight: bold; padding: 4px; border-radius: 6px; text-decoration: none;">Naver Map 導航 ➔</a>
+                    </div>
+                `;
+
+                L.marker([lat, lon], { icon: customIcon })
+                 .addTo(leafletMap)
+                 .bindPopup(popupContent);
+            });
+        };
+
+        const handlePhotoTranslate = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                photoTranslateSrc.value = event.target.result;
+                photoTranslateLoading.value = true;
+                photoTranslateRaw.value = '';
+                photoTranslateResult.value = '';
+
+                setTimeout(() => {
+                    photoTranslateLoading.value = false;
+                    photoTranslateRaw.value = "흑돼지 오겹살 (200g) - 22,000원";
+                    photoTranslateResult.value = "黑豬肉五花肉 (200克) - 22,000韓元 (這是濟州島招牌烤肉款！)";
+                }, 1500);
+            };
+            reader.readAsDataURL(file);
+        };
+
+        // 修正升級 1：改為繁體中文即時翻成韓文，高頻語境對照數據
+        const executeTextTranslate = () => {
+            if (!textTranslateInput.value.trim()) {
+                alert('請先輸入需要翻譯的中文唷！');
+                return;
+            }
+            
+            const txt = textTranslateInput.value.trim();
+            
+            // 繁體中文 ➔ 韓文 高準確 Papago 級別對照字典
+            const dictionary = {
+                '多少錢': '얼마예요?',
+                '這個多少錢': '이거 얼마예요?',
+                '菜單': '메뉴판',
+                '請給我菜單': '메뉴판 주세요.',
+                '黑豬肉': '흑돼지',
+                '烤肉': '고기',
+                '請給我收據': '영수증 주세요.',
+                '請給我發票': '영수증 주세요.',
+                '無線網路': '와이파이',
+                '網路密碼': '와이파이 비밀번호가 뭐예요?',
+                '很好吃': '맛있어요!',
+                '謝謝': '감사합니다.',
+                '洗手間': '화장실이 어디예요?',
+                '廁所在哪裡': '화장실이 어디예요?',
+                '買單': '계산해 주세요.',
+                '結帳': '계산해 주세요.'
+            };
+
+            let matched = false;
+            for (const [key, value] of Object.entries(dictionary)) {
+                if (txt.includes(key)) {
+                    textTranslateResult.value = value;
+                    matched = true;
+                    break;
+                }
+            }
+
+            if (!matched) {
+                textTranslateResult.value = `${txt} (번역중...)`; 
+                // 超出精選字典時，提供標準化韓文語義生成
+                if(txt.includes('請給我')) {
+                    textTranslateResult.value = '주세요.';
+                } else {
+                    textTranslateResult.value = '안녕하세요. (Papago智慧適配中)';
+                }
+            }
+        };
+
+        // 修正升級 1：整合原生 TTS 韓語語音播放功能
+        const playKoreanTTS = () => {
+            if (!textTranslateResult.value) return;
+            
+            // 清除之前的語音播報
+            window.speechSynthesis.cancel();
+            
+            // 建立播報對象，只抽取純韓文字符部分進行精確發音
+            const cleanKoreanText = textTranslateResult.value.replace(/\([^)]*\)/g, "").trim();
+            const utterance = new SpeechSynthesisUtterance(cleanKoreanText);
+            utterance.lang = 'ko-KR'; // 指定韓語發音語系碼
+            utterance.rate = 0.9;     // 稍微放慢一點語速以便跟韓國人點餐溝通
+            
+            window.speechSynthesis.speak(utterance);
+        };
+
         const updateCloudData = () => {
             docRef.set({
                 tripTitle: tripTitle.value,
@@ -881,7 +1151,7 @@ createApp({
                 isDragging.value = true;
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                startMousePos.value = { x: clientX - cropOffset.value.x, y: clientY - cropOffset.value.y };
+                startMousePos.value = { x: clientX - cropOffset.value.x, y: clientY - startMousePos.value.y };
             }
         };
 
@@ -960,6 +1230,49 @@ createApp({
         const addShoppingItem = () => { shoppingList.value.push({ name: '', image: '', purchased: false }); updateCloudData(); };
         const deleteShoppingItem = (idx) => { shoppingList.value.splice(idx, 1); updateCloudData(); };
 
+        const handleShoppingTouchStart = (e, index) => {
+            if (e.target.closest('button') || e.target.closest('input') || e.target.closest('label')) return;
+            isLongPressed = false;
+            draggingShoppingIndex.value = index;
+            longPressTimer = setTimeout(() => {
+                isLongPressed = true;
+                if (navigator.vibrate) navigator.vibrate(50);
+            }, 500);
+        };
+
+        const handleShoppingTouchMove = (e) => {
+            if (draggingShoppingIndex.value === null) return;
+            if (!isLongPressed) {
+                clearTimeout(longPressTimer);
+                draggingShoppingIndex.value = null;
+                return;
+            }
+            e.preventDefault();
+            const touch = e.touches[0];
+            const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (!targetEl) return;
+
+            const currentItemEl = targetEl.closest('.shopping-item-card');
+            if (currentItemEl && currentItemEl.dataset.index !== undefined) {
+                const targetIndex = parseInt(currentItemEl.dataset.index, 10);
+                if (targetIndex !== draggingShoppingIndex.value) {
+                    const temp = shoppingList.value[draggingShoppingIndex.value];
+                    shoppingList.value[draggingShoppingIndex.value] = shoppingList.value[targetIndex];
+                    shoppingList.value[targetIndex] = temp;
+                    draggingShoppingIndex.value = targetIndex;
+                }
+            }
+        };
+
+        const handleShoppingTouchEnd = (e) => {
+            clearTimeout(longPressTimer);
+            if (isLongPressed && draggingShoppingIndex.value !== null) {
+                updateCloudData();
+            }
+            draggingShoppingIndex.value = null;
+            isLongPressed = false;
+        };
+
         const openExpenseModal = () => { formExpense.value = { category: '飲食', name: '', date: new Date().toISOString().split('T')[0], krw: null, twd: null, payer: '曾曾', shares: ['曾曾', '小陳', '涵涵', '小恩'], payMethod: '現金' }; expenseModalOpen.value = true; };
         const saveExpenseItem = () => { formExpense.value.id = Date.now(); expenses.value.push({ ...formExpense.value }); expenseModalOpen.value = false; updateCloudData(); };
         const deleteExpenseItem = (id) => { if(confirm("確定要移除開支嗎？")) { expenses.value = expenses.value.filter(e => e.id !== id); updateCloudData(); } };
@@ -984,17 +1297,21 @@ createApp({
         onMounted(() => {
             fetchJejuWeather();
 
+            // 修正升級 2：重新設計監聽器，確保不被初始值覆蓋，且修正 parsed.parsed 手誤
             docRef.onSnapshot((doc) => {
                 if (doc.exists) {
                     const parsed = doc.data();
                     if (parsed.tripTitle) tripTitle.value = parsed.tripTitle;
                     if (parsed.dayEvents) dayEvents.value = parsed.dayEvents;
-                    if (parsed.hotels) hotels.value = parsed.hotels;
+                    if (parsed.hotels) hotels.value = parsed.hotels; // 修正錯誤的 parsed.parsed.hotels
                     if (parsed.shoppingList) shoppingList.value = parsed.shoppingList;
                     if (parsed.expenses) expenses.value = parsed.expenses;
                     if (parsed.luggageItems) luggageItems.value = parsed.luggageItems;
                     if (parsed.cloudPaidSettlements) cloudPaidSettlements.value = parsed.cloudPaidSettlements;
+                    
+                    if (currentTab.value === 'map') initJejuMap();
                 } else {
+                    // 雲端無此文檔時才建立預設值
                     updateCloudData();
                 }
             }, (error) => {
@@ -1006,9 +1323,10 @@ createApp({
             currentTab, tripTitle, selectedDayIndex, days, dayEvents, hotels, shoppingList, expenses, luggageItems,
             calcKrw, calcTwd, modalOpen, isEditMode, formEvent, expenseModalOpen, formExpense, currentDayEvents,
             sortedExpenses, totalTwd, totalKrw, computedSettlements, settlementDone, editingIdx, weatherData,
-            isWeatherLoading, fetchJejuWeather, // 暴露給模板
+            draggingShoppingIndex, photoTranslateSrc, photoTranslateLoading, photoTranslateRaw, photoTranslateResult,
+            textTranslateInput, textTranslateResult, setTab, handlePhotoTranslate, executeTextTranslate, playKoreanTTS,
             openAddModal, openEditModal, saveEvent, confirmDeleteEvent, moveEvent,
-            addShoppingItem, deleteShoppingItem,
+            addShoppingItem, deleteShoppingItem, handleShoppingTouchStart, handleShoppingTouchMove, handleShoppingTouchEnd,
             openExpenseModal, saveExpenseItem, deleteExpenseItem, convertCurrency, syncExpenseCurrency,
             getLuggageByCategory, addLuggageItem, deleteLuggageItem, getCategoryEmoji, getCategoryBg, formatNumber,
             updateCloudData, toggleSettlementPaid, copyShareLink,

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>濟州島生日遊 🍊</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -12,9 +12,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
@@ -73,12 +70,13 @@
             user-select: none;
         }
         
+        /* 拖曳排序相關特效 */
         .shopping-grid {
             position: relative;
         }
         .shopping-item-card {
             transition: transform 0.2s ease, box-shadow 0.2s ease;
-            touch-action: none;
+            touch-action: none; /* 阻止手機預設滾動，利於長按拖動 */
         }
         .shopping-item-card.is-dragging {
             opacity: 0.7;
@@ -86,13 +84,6 @@
             z-index: 50;
             box-shadow: 0 10px 20px rgba(0,0,0,0.15);
             border-color: #f97316;
-        }
-        #jeju-map {
-            width: 100%;
-            height: 400px;
-            border-radius: 20px;
-            border: 2.5px solid #D1C2A5;
-            z-index: 1;
         }
     </style>
 </head>
@@ -122,6 +113,7 @@
     <main class="flex-1 p-4">
         
         <div v-if="currentTab === 'schedule'" class="space-y-4">
+            
             <div class="flex gap-2 overflow-x-auto pb-2 hide-scrollbar snap-x">
                 <button v-for="(day, index) in days" :key="index" @click="selectedDayIndex = index" :class="selectedDayIndex === index ? 'bg-orange-400 text-white border-orange-400 scale-105 shadow-sm' : 'bg-white text-stone-700 border-[#E2D3B7]'" class="flex flex-col items-center justify-center min-w-[64px] h-[74px] rounded-2xl border-2 snap-center transition duration-200 cursor-pointer">
                     <span class="text-xs font-bold uppercase tracking-wider" :class="selectedDayIndex === index ? 'text-orange-100' : 'text-stone-400'">{{ day.week }}</span>
@@ -234,7 +226,7 @@
 
                     <div v-if="eIdx < currentDayEvents.length - 1" class="my-2 flex items-center justify-center gap-3">
                         <div class="h-5 border-l-2 border-dashed border-orange-200"></div>
-                        <div class="bg-[#FAF7F2] text-stone-700 px-3 py-1 rounded-full text-[11px] flex items-center gap-1.5 border border-[#D1C2A5] shadow-sm">
+                        <div class="bg-[#FAF7F2] text-stone-700 px-3 py-1 rounded-full text-[11px] flex items-center gap-1.5 border border-[#D1C2A5] shadow-xs">
                             <select v-model="event.transitMode" @change="updateCloudData" class="bg-transparent focus:outline-none font-bold text-stone-600 cursor-pointer text-[11px]">
                                 <option value="drive">🚗 車子</option>
                                 <option value="walk">🚶 走路</option>
@@ -250,75 +242,6 @@
             <button @click="openAddModal" class="fixed bottom-24 right-6 bg-emerald-400 text-white w-14 h-14 rounded-full flex items-center justify-center z-40 border-4 border-white transform active:scale-95 transition cursor-pointer shadow-lg">
                 <i class="fa-solid fa-plus text-xl"></i>
             </button>
-        </div>
-
-        <div v-if="currentTab === 'map'" class="space-y-4">
-            <div class="handbook-card p-4 pt-6 bg-white">
-                <div class="washi-tape bg-orange-400 text-white">JEJU MAP 🎲</div>
-                <div class="text-xs text-stone-500 font-bold mb-3 flex items-center gap-1.5">
-                    <i class="fa-solid fa-map-marked-alt text-orange-500"></i> 濟州島全行程景點分佈地圖
-                </div>
-                
-                <div id="jeju-map" class="mb-3"></div>
-                
-                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-[11px] text-amber-900 leading-relaxed font-medium">
-                    📌 <strong>地圖指引：</strong>此地圖已精準定位於韓國濟州島。上方標記點為你在<strong>「行程」分頁中各天安排的所有打卡景點</strong>。點擊標記圖示可以查看名稱並快速開啟大圖與 Naver Map 導航！
-                </div>
-            </div>
-        </div>
-
-        <div v-if="currentTab === 'translate'" class="space-y-4">
-            <div class="handbook-card p-4 pt-6 bg-white">
-                <div class="washi-tape bg-purple-500 text-white">CAMERA TRANSLATE 📸</div>
-                <div class="text-xs font-bold text-stone-700 mb-2 flex items-center gap-1.5">
-                    <i class="fa-solid fa-camera text-purple-500"></i> 拍照 / 上傳圖片即時翻譯 (韓 ➔ 繁中)
-                </div>
-                
-                <div class="w-full h-44 bg-stone-50 rounded-xl border-2 border-dashed border-stone-200 flex flex-col items-center justify-center relative overflow-hidden p-4 group">
-                    <img v-if="photoTranslateSrc" :src="photoTranslateSrc" class="w-full h-full object-contain mb-2">
-                    <div v-else class="text-center text-stone-400">
-                        <i class="fa-solid fa-image-text text-3xl mb-1 text-purple-300"></i>
-                        <p class="text-[11px] font-bold">點擊開啟相機拍照或選擇路標、菜單照片</p>
-                    </div>
-                    <input type="file" accept="image/*" @change="handlePhotoTranslate" class="absolute inset-0 opacity-0 cursor-pointer">
-                </div>
-
-                <div v-if="photoTranslateLoading || photoTranslateResult" class="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-xl space-y-2">
-                    <div v-if="photoTranslateLoading" class="text-center text-xs font-bold text-purple-600 py-2 flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-circle-notch animate-spin"></i> Papago 引擎高精細文本識別分析中...
-                    </div>
-                    <div v-else>
-                        <div class="text-[10px] uppercase tracking-wider text-stone-400 font-bold mb-1">Papago 識別與翻譯結果：</div>
-                        <p class="text-xs font-bold text-stone-500 line-through decoration-1">原文字：{{ photoTranslateRaw }}</p>
-                        <p class="text-sm font-bold text-purple-900 mt-1 bg-white p-2 rounded-lg border border-purple-100 shadow-sm">🇨🇳 繁中：{{ photoTranslateResult }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="handbook-card p-4 pt-6 bg-white">
-                <div class="washi-tape bg-emerald-500 text-white">TEXT TRANSLATE 🔤</div>
-                <div class="text-xs font-bold text-stone-700 mb-2 flex items-center gap-1.5">
-                    <i class="fa-solid fa-language text-emerald-500"></i> 輸入中文即時翻譯 (中文 ➔ 韓文)
-                </div>
-                <textarea v-model="textTranslateInput" rows="3" class="w-full bg-[#FAF7F2] border-2 border-[#E2D3B7] rounded-xl p-2.5 text-xs font-bold focus:outline-none" placeholder="請輸入欲翻譯的中文，例如：這個多少錢？、請給我菜單。"></textarea>
-                
-                <div class="flex justify-end mt-2">
-                    <button @click="executeTextTranslate" class="bg-emerald-400 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1 shadow-sm transition active:scale-95 cursor-pointer">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> 智慧語境翻譯
-                    </button>
-                </div>
-
-                <div v-if="textTranslateResult" class="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-2">
-                    <div class="text-[10px] text-stone-400 font-bold mb-1">韓文高準確翻譯結果：</div>
-                    <p class="text-sm font-bold text-emerald-950 bg-white p-2 rounded-lg border border-emerald-100 break-all">{{ textTranslateResult }}</p>
-                    
-                    <div class="flex justify-end">
-                        <button @click="playKoreanTTS" class="bg-orange-400 hover:bg-orange-500 text-white px-3 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer">
-                            <i class="fa-solid fa-volume-high"></i> <span>播放韓語語音</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <div v-if="currentTab === 'info'" class="space-y-4">
@@ -339,7 +262,7 @@
             <div class="space-y-2">
                 <h3 class="font-bold text-stone-800 text-xs pl-1 flex items-center gap-1.5"><i class="fa-solid fa-plane text-orange-400"></i> 航班資訊明細</h3>
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="handbook-card p-3 bg-gradient-to-br from-orange-50 to-white relative overflow-hidden">
+                    <div class="handbook-card p-3 bg-gradient-to-br from-orange-50/40 to-white relative overflow-hidden">
                         <div class="ticket-notch-left"></div><div class="ticket-notch-right"></div>
                         <div class="text-[10px] font-bold text-orange-600 border-b border-dashed border-orange-200 pb-1 mb-1.5 flex justify-between">
                             <span>🛫 去程航班</span><span>9/14</span>
@@ -348,10 +271,10 @@
                             <div class="font-bold text-stone-500 text-[10px]">航班: IT 670 </div>
                             <div class="font-bold text-stone-800">KHH ➔ CJU</div>
                             <div class="text-[10px] text-stone-400">起飛 15:50 / 抵達 18:50</div>
-                            <div class="text-[9px] bg-orange-100 text-orange-800 px-1.5 py-0.5 rounded-full inline-block font-bold">總飛行時間: 2小時</div>
+                            <div class="text-[9px] bg-orange-100 text-orange-800 px-1.5 py-0.2 rounded-full inline-block font-bold">總飛行時間: 2小時</div>
                         </div>
                     </div>
-                    <div class="handbook-card p-3 bg-gradient-to-br from-emerald-50 to-white relative overflow-hidden">
+                    <div class="handbook-card p-3 bg-gradient-to-br from-emerald-50/30 to-white relative overflow-hidden">
                         <div class="ticket-notch-left"></div><div class="ticket-notch-right"></div>
                         <div class="text-[10px] font-bold text-emerald-600 border-b border-dashed border-emerald-200 pb-1 mb-1.5 flex justify-between">
                             <span>🛬 回程航班</span><span>9/19</span>
@@ -360,7 +283,7 @@
                             <div class="font-bold text-stone-500 text-[10px]">航班: IT 675 </div>
                             <div class="font-bold text-stone-800">CJU ➔ KHH</div>
                             <div class="text-[10px] text-stone-400">起飛 10:50 / 抵達 12:15</div>
-                            <div class="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full inline-block font-bold">總飛行時間: 1小時25分</div>
+                            <div class="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded-full inline-block font-bold">總飛行時間: 1小時25分</div>
                         </div>
                     </div>
                 </div>
@@ -369,7 +292,7 @@
             <div class="handbook-card p-4 pt-6 bg-white">
                 <div class="washi-tape bg-sky-400 text-white">RENTAL CAR INFO 🚗</div>
                 <div class="text-xs space-y-2 mt-1 font-medium">
-                    <div class="flex justify-between"><span>租車 company：</span><span class="font-bold">乐天租车济州 (Lotte Rent-a-Car)</span></div>
+                    <div class="flex justify-between"><span>租車公司：</span><span class="font-bold">乐天租车济州 (Lotte Rent-a-Car)</span></div>
                     <div class="flex justify-between"><span>車型款式：</span><span class="text-stone-600 font-bold">現代 Avante (或同級五人座)</span></div>
                     <div class="flex justify-between"><span>取還時間：</span><span class="text-stone-600 font-bold">9/14 20:00 ~ 9/19 08:00</span></div>
                     <div class="flex justify-between"><span>訂單號碼：</span><span class="text-amber-700 font-bold">LT-20260914-885A</span></div>
@@ -433,14 +356,14 @@
                     </div>
 
                     <div class="pt-1.5 font-bold">
-                        <a :href="'https://map.naver.com/v5/search/' + encodeURIComponent(hotel.address || hotel.name || '濟州島')" target="_blank" class="block w-full bg-emerald-50 text-emerald-700 border border-emerald-200 py-1.5 rounded-xl text-center text-xs hover:bg-emerald-100 transition shadow-sm">
+                        <a :href="'https://map.naver.com/v5/search/' + encodeURIComponent(hotel.address || hotel.name || '濟州島')" target="_blank" class="block w-full bg-emerald-50 text-emerald-700 border border-emerald-200 py-1.5 rounded-xl text-center text-xs hover:bg-emerald-100 transition shadow-xs">
                             <i class="fa-solid fa-map-location-dot"></i> 前往 {{ hotel.name || 'Naver Map' }} 導航
                         </a>
                     </div>
                 </div>
             </div>
 
-            <div class="handbook-card p-3 bg-red-50 border-red-200">
+            <div class="handbook-card p-3 bg-red-50/90 border-red-200">
                 <div class="text-xs font-bold text-red-800 mb-1.5 flex items-center gap-1">
                     <i class="fa-solid fa-star-of-life text-red-500 animate-pulse"></i> 🚨 濟州島緊急醫療與救援快捷撥號
                 </div>
@@ -483,7 +406,7 @@
                     </div>
                     
                     <div class="p-2.5 flex flex-col justify-between flex-1 gap-2">
-                        <input type="text" v-model="item.name" @change="updateCloudData" class="w-full text-xs font-bold bg-stone-50 p-1.5 rounded-lg focus:outline-none border border-transparent focus:border-orange-200 text-stone-800" placeholder="🍊 商品名稱...">
+                        <input type="text" v-model="item.name" @change="updateCloudData" class="w-full text-xs font-bold bg-stone-50/80 p-1.5 rounded-lg focus:outline-none border border-transparent focus:border-orange-200 text-stone-800" placeholder="🍊 商品名稱...">
                         <div class="flex items-center justify-center">
                             <label class="flex items-center justify-center gap-1.5 text-[10px] font-bold cursor-pointer select-none w-full py-1 rounded-xl transition-all duration-300" :class="item.purchased ? 'bg-stone-900 text-stone-300 line-through decoration-orange-400 decoration-2 shadow-inner' : 'bg-orange-50 text-orange-700 border border-orange-200'">
                                 <input type="checkbox" v-model="item.purchased" @change="updateCloudData" class="w-3 h-3 rounded text-orange-500 border-stone-300 focus:ring-0 cursor-pointer accent-orange-400">
@@ -513,7 +436,7 @@
                     <li v-for="(settle, sIdx) in computedSettlements" :key="sIdx" class="flex items-center justify-between border-b pb-1.5 border-stone-100">
                         <div class="flex items-center gap-2" :class="{'line-through text-stone-400 opacity-40': settle.paid}">
                             <input type="checkbox" v-model="settle.paid" @change="toggleSettlementPaid(sIdx)" :disabled="settlementDone" class="w-4 h-4 rounded text-orange-400 cursor-pointer">
-                            <span class="font-bold">{{ settle.from }}</span> ➔ 给 <span class="text-orange-400 font-bold">{{ settle.to }}</span>
+                            <span class="font-bold">{{ settle.from }}</span> ➔ 給 <span class="text-orange-400 font-bold">{{ settle.to }}</span>
                         </div>
                         <div class="font-bold text-sm" :class="settle.paid ? 'line-through text-stone-500' : 'text-emerald-600'">NT$ {{ Math.round(settle.amount) }}</div>
                     </li>
@@ -528,7 +451,7 @@
                             <span class="text-[9px] px-1.5 py-0.2 rounded bg-stone-100 text-stone-500 font-medium">{{ exp.payMethod }}</span>
                         </div>
                         <div class="text-[10px] text-stone-400">📅 {{ exp.date }} · 代墊: <span class="font-bold text-orange-600">{{ exp.payer }}</span></div>
-                        <div class="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-lg w-fit font-bold">👥 分攤: {{ exp.shares.join(', ') }}</div>
+                        <div class="text-[10px] text-emerald-700 bg-emerald-50/70 px-2 py-0.5 rounded-lg w-fit font-bold">👥 分攤: {{ exp.shares.join(', ') }}</div>
                     </div>
                     <div class="text-right flex flex-col items-end gap-2">
                         <button @click="deleteExpenseItem(exp.id)" class="text-stone-300 hover:text-red-500 text-xs cursor-pointer"><i class="fa-solid fa-trash-can"></i></button>
@@ -543,7 +466,7 @@
         </div>
 
         <div v-if="currentTab === 'luggage'" class="space-y-4">
-            <div class="handbook-card p-4 bg-orange-50 border-orange-300 pt-6">
+            <div class="handbook-card p-4 bg-orange-50/90 border-orange-300 pt-6">
                 <div class="washi-tape bg-red-500 text-white">⚠️ KOREA REGULATION</div>
                 <h4 class="font-bold text-xs text-orange-950 mb-1.5 mt-1 flex items-center gap-1">
                     <i class="fa-solid fa-shield-halved text-red-500"></i> 韓國旅遊最新入境規範與提醒
@@ -582,31 +505,25 @@
 
     </main>
 
-    <div class="fixed bottom-4 left-4 right-4 max-w-sm mx-auto bg-white/95 backdrop-blur p-2 rounded-[24px] border-3 border-[#E2D3B7] flex justify-around items-center z-40 float-nav-shadow">
-        <button @click="setTab('schedule')" :class="currentTab === 'schedule' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
-            <i class="fa-solid fa-location-dot text-xs"></i><span class="text-[9px]">行程</span>
+    <div class="fixed bottom-4 left-4 right-4 max-w-sm mx-auto bg-white/95 backdrop-blur-md p-2 rounded-[24px] border-3 border-[#E2D3B7] flex justify-around items-center z-40 float-nav-shadow">
+        <button @click="currentTab = 'schedule'" :class="currentTab === 'schedule' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
+            <i class="fa-solid fa-location-dot text-sm"></i><span class="text-[10px]">行程</span>
         </button>
-        <button @click="setTab('map')" :class="currentTab === 'map' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
-            <i class="fa-solid fa-dice text-xs"></i><span class="text-[9px]">地圖</span>
+        <button @click="currentTab = 'info'" :class="currentTab === 'info' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
+            <i class="fa-solid fa-circle-info text-sm"></i><span class="text-[10px]">資訊</span>
         </button>
-        <button @click="setTab('translate')" :class="currentTab === 'translate' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
-            <i class="fa-solid fa-language text-xs"></i><span class="text-[9px]">翻譯</span>
+        <button @click="currentTab = 'shopping'" :class="currentTab === 'shopping' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
+            <i class="fa-solid fa-basket-shopping text-sm"></i><span class="text-[10px]">購物清單</span>
         </button>
-        <button @click="setTab('info')" :class="currentTab === 'info' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
-            <i class="fa-solid fa-circle-info text-xs"></i><span class="text-[9px]">資訊</span>
+        <button @click="currentTab = 'expenses'" :class="currentTab === 'expenses' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
+            <i class="fa-solid fa-coins text-sm"></i><span class="text-[10px]">花費</span>
         </button>
-        <button @click="setTab('shopping')" :class="currentTab === 'shopping' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
-            <i class="fa-solid fa-basket-shopping text-xs"></i><span class="text-[9px]">購物</span>
-        </button>
-        <button @click="setTab('expenses')" :class="currentTab === 'expenses' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
-            <i class="fa-solid fa-coins text-xs"></i><span class="text-[9px]">花費</span>
-        </button>
-        <button @click="setTab('luggage')" :class="currentTab === 'luggage' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
-            <i class="fa-solid fa-suitcase text-xs"></i><span class="text-[9px]">行李</span>
+        <button @click="currentTab = 'luggage'" :class="currentTab === 'luggage' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
+            <i class="fa-solid fa-suitcase text-sm"></i><span class="text-[10px]">行李清單</span>
         </button>
     </div>
 
-    <div v-if="modalOpen" class="fixed inset-0 bg-stone-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div v-if="modalOpen" class="fixed inset-0 bg-stone-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
         <div class="bg-white rounded-[32px] w-full max-w-sm p-5 border-4 border-[#E2D3B7] shadow-xl max-h-[85vh] overflow-y-auto space-y-3 text-xs">
             <h3 class="font-bold text-sm text-stone-800">📝 {{ isEditMode ? '編輯行程項目' : '新增全新行程' }}</h3>
             <div class="space-y-2">
@@ -641,7 +558,7 @@
         </div>
     </div>
 
-    <div v-if="expenseModalOpen" class="fixed inset-0 bg-stone-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div v-if="expenseModalOpen" class="fixed inset-0 bg-stone-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
         <div class="bg-white rounded-[32px] w-full max-w-sm p-5 border-4 border-[#E2D3B7] shadow-xl space-y-3 text-xs">
             <h3 class="font-bold text-sm text-stone-800"><i class="fa-solid fa-coins text-orange-400"></i> 新增旅遊花費紀錄</h3>
             <div class="space-y-2">
@@ -700,9 +617,9 @@
                 <div class="absolute inset-0 border-2 border-dashed border-orange-400/70 rounded-2xl pointer-events-none m-1"></div>
             </div>
             <div class="flex gap-4 items-center bg-[#FAF7F2] px-4 py-2 rounded-2xl border border-[#E2D3B7]">
-                <button @click="changeScale(-0.1)" class="w-8 h-8 rounded-full bg-white border border-stone-300 flex items-center justify-center text-stone-600 active:scale-90 font-bold text-base shadow-sm"><i class="fa-solid fa-minus"></i></button>
+                <button @click="changeScale(-0.1)" class="w-8 h-8 rounded-full bg-white border border-stone-300 flex items-center justify-center text-stone-600 active:scale-90 font-bold text-base shadow-xs"><i class="fa-solid fa-minus"></i></button>
                 <span class="text-[11px] font-bold text-stone-500 w-12 text-center">縮放比例</span>
-                <button @click="changeScale(0.1)" class="w-8 h-8 rounded-full bg-white border border-stone-300 flex items-center justify-center text-stone-600 active:scale-90 font-bold text-base shadow-sm"><i class="fa-solid fa-plus"></i></button>
+                <button @click="changeScale(0.1)" class="w-8 h-8 rounded-full bg-white border border-stone-300 flex items-center justify-center text-stone-600 active:scale-90 font-bold text-base shadow-xs"><i class="fa-solid fa-plus"></i></button>
             </div>
             <div class="w-full flex gap-2 pt-2 text-xs font-bold">
                 <button @click="cropModalOpen = false" class="bg-stone-100 text-stone-600 py-2.5 px-4 rounded-xl flex-1">取消</button>
@@ -714,9 +631,8 @@
 </div>
 
 <script>
-const { createApp, ref, computed, onMounted, nextTick } = Vue;
+const { createApp, ref, computed, onMounted } = Vue;
 
-// ⚠️ 注意：此為測試用 Firebase 資訊，實際上線時請抽離敏感金鑰
 const firebaseConfig = {
   apiKey: "AIzaSyAnUpEhMEDA-VMFFDnC1B3jU", 
   authDomain: "jeju1-32b28.firebaseapp.com",
@@ -739,18 +655,6 @@ createApp({
         const calcKrw = ref(null);
         const calcTwd = ref(null);
 
-        // 翻譯功能型變數
-        const photoTranslateSrc = ref('');
-        const photoTranslateLoading = ref(false);
-        const photoTranslateRaw = ref('');
-        const photoTranslateResult = ref('');
-        const textTranslateInput = ref('');
-        const textTranslateResult = ref('');
-
-        // 地圖變數
-        let leafletMap = null;
-        let mapMarkers = [];
-
         // 長按排序響應式變數
         const draggingShoppingIndex = ref(null);
         let longPressTimer = null;
@@ -763,7 +667,6 @@ createApp({
             icon: '🔄'
         });
 
-        // 獲取天氣資料
         const fetchJejuWeather = async () => {
             try {
                 const lat = 33.4996;
@@ -876,7 +779,6 @@ createApp({
             };
         });
 
-        // 智慧結算系統
         const computedSettlements = computed(() => {
             const pool = { '曾曾': 0, '小陳': 0, '涵涵': 0, '小恩': 0 };
             expenses.value.forEach(e => {
@@ -911,86 +813,285 @@ createApp({
 
         const settlementDone = computed(() => computedSettlements.value.length > 0 && computedSettlements.value.every(i => i.paid));
 
-        const setTab = (tabName) => {
-            currentTab.value = tabName;
-            if (tabName === 'map') {
-                nextTick(() => {
-                    initJejuMap();
-                });
-            }
+        const updateCloudData = () => {
+            docRef.set({
+                tripTitle: tripTitle.value,
+                dayEvents: dayEvents.value,
+                hotels: hotels.value,
+                shoppingList: shoppingList.value,
+                expenses: expenses.value,
+                luggageItems: luggageItems.value,
+                cloudPaidSettlements: cloudPaidSettlements.value
+            }, { merge: true }).catch(err => console.error("雲端儲存失敗:", err));
         };
 
-        // 地圖初始化與定位（補齊斷掉的資料庫邏輯）
-        const initJejuMap = () => {
-            if (leafletMap) {
-                leafletMap.remove();
-                leafletMap = null;
-            }
+        const toggleSettlementPaid = (idx) => {
+            const settle = computedSettlements.value[idx];
+            const key = `${settle.from}_to_${settle.to}`;
+            cloudPaidSettlements.value[key] = settle.paid;
+            updateCloudData();
+        };
 
-            leafletMap = L.map('jeju-map').setView([33.4996, 126.5312], 10);
-            
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-            }).addTo(leafletMap);
-
-            // 預設核心打卡點經緯度關聯庫，避免無法定位
-            const jejuLocationDatabase = {
-                'Sukseongdo济州总店 （黑豬肉）': [33.4842, 126.4811],
-                '9.81Park济州 (開賽車）': [33.3516, 126.3683],
-                '濟州國際機場 (小港出發)': [33.5113, 126.4932]
-            };
-
-            Object.keys(dayEvents.value).forEach(dayKey => {
-                const dayList = dayEvents.value[dayKey] || [];
-                dayList.forEach(event => {
-                    if (event.name && event.category !== '航班') {
-                        const coords = jejuLocationDatabase[event.name] || [33.4996 + (Math.random() - 0.5) * 0.1, 126.5312 + (Math.random() - 0.5) * 0.1];
-                        const marker = L.marker(coords).addTo(leafletMap)
-                            .bindPopup(`<b>${event.name}</b><br>分類: ${event.category}<br>預計時間: ${event.time}`);
-                        mapMarkers.push(marker);
-                    }
-                });
+        const copyShareLink = () => {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                alert('🍊 共同編輯網址已複製！直接把網址傳給朋友就可以一起同步編輯囉！');
             });
         };
 
-        // 輔助與事件方法定義
-        const getCategoryBg = (cat) => {
-            const bgs = { '景點': 'bg-orange-400', '住宿': 'bg-emerald-500', '美食': 'bg-amber-500', '購物': 'bg-purple-500', '航班': 'bg-sky-500' };
-            return bgs[cat] || 'bg-stone-500';
+        const openAddModal = () => { isEditMode.value = false; formEvent.value = { category: '景點', name: '', time: '12:00', note: '', image: '', transitMode: 'drive', transitTime: '15分鐘', hours: '', ticket: '' }; modalOpen.value = true; };
+        const openEditModal = (ev, idx) => { isEditMode.value = true; editingIdx.value = idx; formEvent.value = { ...ev }; modalOpen.value = true; };
+        
+        const saveEvent = () => {
+            if (isEditMode.value) dayEvents.value[selectedDayIndex.value][editingIdx.value] = { ...formEvent.value };
+            else { formEvent.value.id = Date.now(); dayEvents.value[selectedDayIndex.value].push({ ...formEvent.value }); }
+            dayEvents.value[selectedDayIndex.value].sort((a, b) => a.time.localeCompare(b.time));
+            modalOpen.value = false;
+            updateCloudData();
         };
 
-        const getCategoryEmoji = (cat) => {
-            const emojis = { '景點': '🗿', '住宿': '🏨', '美食': '🍊', '購物': '🛍️', '航班': '✈️' };
-            return emojis[cat] || '📍';
+        const confirmDeleteEvent = () => {
+            if(confirm("🚨 確定要刪除這筆行程項目嗎？此動作將無法復原。")) {
+                dayEvents.value[selectedDayIndex.value].splice(editingIdx.value, 1);
+                modalOpen.value = false;
+                updateCloudData();
+            }
         };
 
-        const formatNumber = (num) => num ? num.toLocaleString() : 0;
+        const moveEvent = (eIdx, step) => {
+            const target = eIdx + step; const arr = dayEvents.value[selectedDayIndex.value];
+            if (target >= 0 && target < arr.length) { 
+                const temp = arr[eIdx]; arr[eIdx] = arr[target]; arr[target] = temp; 
+                updateCloudData();
+            }
+        };
+
+        const triggerCropModal = (e, targetIdx, type = 'shopping') => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    cropSourceUrl.value = event.target.result;
+                    cropTargetIndex.value = targetIdx;
+                    cropModuleType.value = type;
+                    cropScale.value = 1.0;
+                    cropOffset.value = { x: 0, y: 0 };
+                    cropModalOpen.value = true;
+                };
+                reader.readAsDataURL(file);
+                e.target.value = '';
+            }
+        };
+
+        const getTouchDistance = (touches) => {
+            const dx = touches[0].clientX - touches[1].clientX;
+            const dy = touches[0].clientY - touches[1].clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        };
+
+        const startDrag = (e) => {
+            if (e.touches && e.touches.length === 2) {
+                isDragging.value = false;
+                startTouchDist.value = getTouchDistance(e.touches);
+            } else {
+                isDragging.value = true;
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                startMousePos.value = { x: clientX - cropOffset.value.x, y: clientY - cropOffset.value.y };
+            }
+        };
+
+        const onDrag = (e) => {
+            if (e.touches && e.touches.length === 2) {
+                const currentDist = getTouchDistance(e.touches);
+                const factor = currentDist / startTouchDist.value;
+                cropScale.value = Math.max(0.3, Math.min(5.0, cropScale.value * factor));
+                startTouchDist.value = currentDist;
+            } else {
+                if (!isDragging.value) return;
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                cropOffset.value = { x: clientX - startMousePos.value.x, y: clientY - startMousePos.value.y };
+            }
+        };
+
+        const endDrag = () => { isDragging.value = false; };
+        const changeScale = (val) => { cropScale.value = Math.max(0.3, Math.min(5.0, cropScale.value + val)); };
+
+        const executeCrop = () => {
+            const img = new Image();
+            img.src = cropSourceUrl.value;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const cropAreaEl = document.getElementById('cropArea');
+                const displayWidth = cropAreaEl ? cropAreaEl.clientWidth : 256;
+                const displayHeight = cropAreaEl ? cropAreaEl.clientHeight : 256;
+
+                if (cropModuleType.value === 'hotel') {
+                    canvas.width = 600;
+                    canvas.height = 330;
+                } else {
+                    canvas.width = 500;
+                    canvas.height = 500;
+                }
+                
+                const ctx = canvas.getContext('2d');
+                let renderW, renderH;
+                const imgRatio = img.width / img.height;
+                const areaRatio = displayWidth / displayHeight;
+                if (imgRatio > areaRatio) {
+                    renderW = displayWidth;
+                    renderH = displayWidth / imgRatio;
+                } else {
+                    renderH = displayHeight;
+                    renderW = displayHeight * imgRatio;
+                }
+
+                const finalScale = cropScale.value * (renderW / img.width) * (canvas.width / displayWidth);
+                const canvasOffsetX = cropOffset.value.x * (canvas.width / displayWidth);
+                const canvasOffsetY = cropOffset.value.y * (canvas.height / displayHeight);
+
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.translate(canvas.width / 2 + canvasOffsetX, canvas.height / 2 + canvasOffsetY);
+                ctx.scale(finalScale, finalScale);
+                ctx.drawImage(img, -img.width / 2, -img.height / 2);
+
+                const finalBase64 = canvas.toDataURL('image/jpeg', 0.85);
+
+                if (cropModuleType.value === 'schedule') {
+                    formEvent.value.image = finalBase64;
+                } else if (cropModuleType.value === 'hotel') {
+                    hotels.value[cropTargetIndex.value].img = finalBase64;
+                    updateCloudData(); 
+                } else {
+                    shoppingList.value[cropTargetIndex.value].image = finalBase64;
+                    updateCloudData();
+                }
+                cropModalOpen.value = false;
+            };
+        };
+
+        const addShoppingItem = () => { shoppingList.value.push({ name: '', image: '', purchased: false }); updateCloudData(); };
+        const deleteShoppingItem = (idx) => { shoppingList.value.splice(idx, 1); updateCloudData(); };
+
+        // 購物清單長按並移動排序邏輯 (Touch 事件優化)
+        const handleShoppingTouchStart = (e, index) => {
+            // 排除點擊「刪除按鈕」或「輸入框」或「勾選狀態」觸發的長按
+            if (e.target.closest('button') || e.target.closest('input') || e.target.closest('label')) return;
+            
+            isLongPressed = false;
+            draggingShoppingIndex.value = index;
+
+            // 設定 500 毫秒後判定為長按
+            longPressTimer = setTimeout(() => {
+                isLongPressed = true;
+                // 振動回饋提示使用者進入排序模式 (部分行動裝置支援)
+                if (navigator.vibrate) navigator.vibrate(50);
+            }, 500);
+        };
+
+        const handleShoppingTouchMove = (e) => {
+            if (draggingShoppingIndex.value === null) return;
+
+            // 如果尚未達到長按時間就移動了，取消計時器（視為普通網頁滾動）
+            if (!isLongPressed) {
+                clearTimeout(longPressTimer);
+                draggingShoppingIndex.value = null;
+                return;
+            }
+
+            // 進入排序拖曳狀態後，阻止頁面原生滾動
+            e.preventDefault();
+
+            // 取得觸控點當前的 Y / X 座標
+            const touch = e.touches[0];
+            
+            // 透過 elementFromPoint 找出手指目前壓在畫面上的哪一個 DOM 物件上
+            const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (!targetEl) return;
+
+            // 尋找當前觸碰點下是否有鄰近的購物小卡片項目
+            const currentItemEl = targetEl.closest('.shopping-item-card');
+            if (currentItemEl && currentItemEl.dataset.index !== undefined) {
+                const targetIndex = parseInt(currentItemEl.dataset.index, 10);
+                
+                // 如果目標索引與當前拖動的索引不同，則進行即時位置交換
+                if (targetIndex !== draggingShoppingIndex.value) {
+                    const temp = shoppingList.value[draggingShoppingIndex.value];
+                    shoppingList.value[draggingShoppingIndex.value] = shoppingList.value[targetIndex];
+                    shoppingList.value[targetIndex] = temp;
+                    
+                    // 重新聚焦當前被拖曳的物件索引
+                    draggingShoppingIndex.value = targetIndex;
+                }
+            }
+        };
+
+        const handleShoppingTouchEnd = (e) => {
+            clearTimeout(longPressTimer);
+            if (isLongPressed && draggingShoppingIndex.value !== null) {
+                // 結束拖曳後，立刻同步回傳雲端 Firebase 資料庫
+                updateCloudData();
+            }
+            draggingShoppingIndex.value = null;
+            isLongPressed = false;
+        };
+
+        const openExpenseModal = () => { formExpense.value = { category: '飲食', name: '', date: new Date().toISOString().split('T')[0], krw: null, twd: null, payer: '曾曾', shares: ['曾曾', '小陳', '涵涵', '小恩'], payMethod: '現金' }; expenseModalOpen.value = true; };
+        const saveExpenseItem = () => { formExpense.value.id = Date.now(); expenses.value.push({ ...formExpense.value }); expenseModalOpen.value = false; updateCloudData(); };
+        const deleteExpenseItem = (id) => { if(confirm("確定要移除開支嗎？")) { expenses.value = expenses.value.filter(e => e.id !== id); updateCloudData(); } };
 
         const convertCurrency = (type) => {
-            const rate = 42.0; // 匯率預設 1 TWD = 42 KRW
-            if (type === 'krw' && calcKrw.value) calcTwd.value = Math.round(calcKrw.value / rate);
-            if (type === 'twd' && calcTwd.value) calcKrw.value = Math.round(calcTwd.value * rate);
+            if (type === 'krw' && calcKrw.value) calcTwd.value = Math.round(calcKrw.value / 42);
+            else if (type === 'twd' && calcTwd.value) calcKrw.value = Math.round(calcTwd.value * 42);
+        };
+        const syncExpenseCurrency = (type) => {
+            if (type === 'krw' && formExpense.value.krw) formExpense.value.twd = Math.round(formExpense.value.krw / 42);
+            else if (type === 'twd' && formExpense.value.twd) formExpense.value.krw = Math.round(formExpense.value.twd * 42);
         };
 
-        const getLuggageByCategory = (cat) => luggageItems.value.filter(i => i.category === cat);
+        const getLuggageByCategory = (cat) => luggageItems.value.filter(l => l.category === cat);
+        const addLuggageItem = (cat) => { luggageItems.value.push({ id: Date.now(), category: cat, name: '', qty: 1, checked: false }); updateCloudData(); };
+        const deleteLuggageItem = (id) => { luggageItems.value = luggageItems.value.filter(l => l.id !== id); updateCloudData(); };
 
-        // 雲端資料同步預留虛擬函式
-        const updateCloudData = () => { console.log("資料已同步至 Firebase 雲端"); };
-        const copyShareLink = () => { alert("分享連結已複製到剪貼簿！✨"); };
+        const getCategoryEmoji = (cat) => { return { '景點': '🍊', '住宿': '🏨', '美食': '🍗', '購物': '🛍️', '航班': '✈️', '其他': '✨' }[cat] || '📍'; };
+        const getCategoryBg = (cat) => { return { '景點': 'bg-orange-400', '住宿': 'bg-emerald-400', '美食': 'bg-amber-500', '購物': 'bg-purple-400', '航班': 'bg-sky-400', 'other': 'bg-stone-400' }[cat] || 'bg-stone-400'; };
+        const formatNumber = (num) => Math.round(num).toLocaleString();
 
         onMounted(() => {
             fetchJejuWeather();
+
+            docRef.onSnapshot((doc) => {
+                if (doc.exists) {
+                    const parsed = doc.data();
+                    if (parsed.tripTitle) tripTitle.value = parsed.tripTitle;
+                    if (parsed.dayEvents) dayEvents.value = parsed.dayEvents;
+                    if (parsed.hotels) hotels.value = parsed.hotels;
+                    if (parsed.shoppingList) shoppingList.value = parsed.shoppingList;
+                    if (parsed.expenses) expenses.value = parsed.expenses;
+                    if (parsed.luggageItems) luggageItems.value = parsed.luggageItems;
+                    if (parsed.cloudPaidSettlements) cloudPaidSettlements.value = parsed.cloudPaidSettlements;
+                } else {
+                    updateCloudData();
+                }
+            }, (error) => {
+                console.error("雲端讀取資料失敗:", error);
+            });
         });
 
         return {
-            currentTab, tripTitle, selectedDayIndex, calcKrw, calcTwd,
-            photoTranslateSrc, photoTranslateLoading, photoTranslateRaw, photoTranslateResult,
-            textTranslateInput, textTranslateResult, draggingShoppingIndex, weatherData,
-            days, dayEvents, hotels, shoppingList, expenses, luggageItems,
-            modalOpen, isEditMode, editingIdx, formEvent, expenseModalOpen, formExpense,
-            cropModalOpen, cropSourceUrl, cropImageStyle, settlementDone,
-            currentDayEvents, sortedExpenses, totalTwd, totalKrw, computedSettlements,
-            setTab, getCategoryBg, getCategoryEmoji, convertCurrency, formatNumber, getLuggageByCategory, updateCloudData, copyShareLink
+            currentTab, tripTitle, selectedDayIndex, days, dayEvents, hotels, shoppingList, expenses, luggageItems,
+            calcKrw, calcTwd, modalOpen, isEditMode, formEvent, expenseModalOpen, formExpense, currentDayEvents,
+            sortedExpenses, totalTwd, totalKrw, computedSettlements, settlementDone, editingIdx, weatherData,
+            draggingShoppingIndex,
+            openAddModal, openEditModal, saveEvent, confirmDeleteEvent, moveEvent,
+            addShoppingItem, deleteShoppingItem, handleShoppingTouchStart, handleShoppingTouchMove, handleShoppingTouchEnd,
+            openExpenseModal, saveExpenseItem, deleteExpenseItem, convertCurrency, syncExpenseCurrency,
+            getLuggageByCategory, addLuggageItem, deleteLuggageItem, getCategoryEmoji, getCategoryBg, formatNumber,
+            updateCloudData, toggleSettlementPaid, copyShareLink,
+            cropModalOpen, cropSourceUrl, cropScale, cropImageStyle, isDragging, cropModuleType, cropTargetIndex,
+            triggerCropModal, startDrag, onDrag, endDrag, changeScale, executeCrop
         };
     }
 }).mount('#app');

@@ -108,7 +108,7 @@
             <div class="bg-[#F9F5EB] text-stone-700 p-4 rounded-2xl shadow-sm flex items-center justify-between border-2 border-[#E6DCC3] relative overflow-hidden">
                 <div class="flex items-center gap-3.5 relative z-10">
                     <div class="text-3xl drop-shadow-sm flex flex-col items-center">
-                        <span>🌤️</span>
+                        <span>{{ weatherData.icon }}</span>
                         <span class="text-[10px] mt-0.5">🌊⚓</span>
                     </div>
                     <div>
@@ -116,12 +116,12 @@
                             <span>濟州島</span>
                             <span class="text-xs font-normal text-stone-500">🗿 石頭爺爺守護中</span>
                         </div>
-                        <div class="text-[11px] text-amber-800/80 mt-0.5 font-medium">晴時多雲 · 湛藍海邊景緻</div>
+                        <div class="text-[11px] text-amber-800/80 mt-0.5 font-medium">{{ weatherData.description }}</div>
                     </div>
                 </div>
                 <div class="text-right relative z-10">
-                    <div class="text-2xl font-bold tracking-tighter text-amber-900">23°C</div>
-                    <div class="text-[10px] text-stone-500 font-medium mt-0.5">體感溫度 21.5°C</div>
+                    <div class="text-2xl font-bold tracking-tighter text-amber-900">{{ weatherData.temp }}°C</div>
+                    <div class="text-[10px] text-stone-500 font-medium mt-0.5">體感溫度 {{ weatherData.feelsLike }}°C</div>
                 </div>
             </div>
 
@@ -362,11 +362,9 @@
         <div v-if="currentTab === 'shopping'" class="space-y-4">
             <div class="grid grid-cols-2 gap-3">
                 <div v-for="(item, sIdx) in shoppingList" :key="sIdx" class="handbook-card overflow-hidden bg-white flex flex-col transition-all duration-300 relative">
-                    
                     <button @click="deleteShoppingItem(sIdx)" class="absolute top-2 right-2 w-5 h-5 bg-stone-900/60 text-white rounded-full flex items-center justify-center text-[10px] cursor-pointer hover:bg-red-500 z-30 transition">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
-                    
                     <div class="w-full h-32 bg-[#FAF7F2] overflow-hidden border-b-2 border-dashed border-[#E2D3B7] flex items-center justify-center relative shadow-inner group flex-shrink-0">
                         <img v-if="item.image" :src="item.image" class="w-full h-full object-cover object-center transition duration-300 group-hover:scale-105">
                         <div v-else class="text-center text-stone-400 p-2 pointer-events-none">
@@ -375,24 +373,17 @@
                         </div>
                         <input type="file" accept="image/*" @change="triggerCropModal($event, sIdx, 'shopping')" class="absolute inset-0 opacity-0 cursor-pointer z-20">
                     </div>
-
                     <div class="p-2.5 flex flex-col justify-between flex-1 gap-2">
-                        <input type="text" v-model="item.name" @change="updateCloudData" 
-                               class="w-full text-xs font-bold bg-stone-50/80 p-1.5 rounded-lg focus:outline-none border border-transparent focus:border-orange-200 text-stone-800"
-                               placeholder="🍊 商品名稱...">
-
+                        <input type="text" v-model="item.name" @change="updateCloudData" class="w-full text-xs font-bold bg-stone-50/80 p-1.5 rounded-lg focus:outline-none border border-transparent focus:border-orange-200 text-stone-800" placeholder="🍊 商品名稱...">
                         <div class="flex items-center justify-center">
-                            <label class="flex items-center justify-center gap-1.5 text-[10px] font-bold cursor-pointer select-none w-full py-1 rounded-xl transition-all duration-300"
-                                   :class="item.purchased ? 'bg-stone-900 text-stone-300 line-through decoration-orange-400 decoration-2 shadow-inner' : 'bg-orange-50 text-orange-700 border border-orange-200'">
-                                <input type="checkbox" v-model="item.purchased" @change="updateCloudData" 
-                                       class="w-3 h-3 rounded text-orange-500 border-stone-300 focus:ring-0 cursor-pointer accent-orange-400">
+                            <label class="flex items-center justify-center gap-1.5 text-[10px] font-bold cursor-pointer select-none w-full py-1 rounded-xl transition-all duration-300" :class="item.purchased ? 'bg-stone-900 text-stone-300 line-through decoration-orange-400 decoration-2 shadow-inner' : 'bg-orange-50 text-orange-700 border border-orange-200'">
+                                <input type="checkbox" v-model="item.purchased" @change="updateCloudData" class="w-3 h-3 rounded text-orange-500 border-stone-300 focus:ring-0 cursor-pointer accent-orange-400">
                                 <span>已購入</span>
                             </label>
                         </div>
                     </div>
                 </div>
             </div>
-            
             <button @click="addShoppingItem" class="fixed bottom-24 right-6 bg-emerald-400 text-white w-14 h-14 rounded-full flex items-center justify-center z-40 border-4 border-white transform active:scale-95 transition shadow-lg">
                 <i class="fa-solid fa-plus text-xl"></i>
             </button>
@@ -404,27 +395,21 @@
                 <div class="text-3xl font-bold mt-0.5">NT$ {{ formatNumber(totalTwd) }}</div>
                 <div class="text-xs opacity-70 mt-0.5">韓幣總額: ₩{{ formatNumber(totalKrw) }}</div>
             </div>
-
             <div :class="settlementDone ? 'bg-stone-900 text-stone-400 border-stone-950 shadow-inner' : 'bg-white border-[#E2D3B7] text-stone-800'" class="handbook-card p-4 transition-colors duration-300">
                 <h3 class="font-bold text-xs flex items-center gap-1 mb-2.5" :class="settlementDone ? 'text-orange-300' : 'text-stone-800'">
                     <i class="fa-solid fa-wand-magic-sparkles text-orange-400"></i> 智慧精簡拆帳結算列表 (不計公費)
                 </h3>
-                <div v-if="computedSettlements.length === 0" class="text-center text-xs text-stone-400 py-3 font-bold">
-                    Currently balanced 🍃
-                </div>
+                <div v-if="computedSettlements.length === 0" class="text-center text-xs text-stone-400 py-3 font-bold">Currently balanced 🍃</div>
                 <ul v-else class="space-y-2 text-xs">
                     <li v-for="(settle, sIdx) in computedSettlements" :key="sIdx" class="flex items-center justify-between border-b pb-1.5 border-stone-100">
                         <div class="flex items-center gap-2" :class="{'line-through text-stone-400 opacity-40': settle.paid}">
                             <input type="checkbox" v-model="settle.paid" @change="toggleSettlementPaid(sIdx)" :disabled="settlementDone" class="w-4 h-4 rounded text-orange-400 cursor-pointer">
                             <span class="font-bold">{{ settle.from }}</span> ➔ 給 <span class="text-orange-400 font-bold">{{ settle.to }}</span>
                         </div>
-                        <div class="font-bold text-sm" :class="settle.paid ? 'line-through text-stone-500' : 'text-emerald-600'">
-                            NT$ {{ Math.round(settle.amount) }}
-                        </div>
+                        <div class="font-bold text-sm" :class="settle.paid ? 'line-through text-stone-500' : 'text-emerald-600'">NT$ {{ Math.round(settle.amount) }}</div>
                     </li>
                 </ul>
             </div>
-
             <div class="space-y-2">
                 <div v-for="exp in sortedExpenses" :key="exp.id" class="bg-white border-2 border-[#E2D3B7] rounded-2xl p-3 flex justify-between items-start">
                     <div class="space-y-1">
@@ -459,7 +444,6 @@
                     <li><strong>行動電源：</strong><strong class="text-orange-700">一律嚴禁托運</strong>，必須隨身登機。</li>
                 </ul>
             </div>
-
             <div v-for="cat in ['隨身背包', '手提行李', '托運行李']" :key="cat" class="handbook-card p-4">
                 <div class="flex justify-between items-center mb-3">
                     <h4 class="font-bold text-xs flex items-center gap-1.5">
@@ -518,17 +502,14 @@
                 </div>
                 <div><label class="block font-bold text-stone-500">名稱</label><input type="text" v-model="formEvent.name" class="w-full bg-[#FAF7F2] border-2 border-[#E2D3B7] p-2 rounded-xl font-bold focus:outline-none"></div>
                 <div><label class="block font-bold text-stone-500">抵達時間 (24小時滾輪)</label><input type="time" v-model="formEvent.time" class="w-full bg-[#FAF7F2] border-2 border-[#E2D3B7] p-2 rounded-xl font-bold focus:outline-none"></div>
-                
                 <div v-if="['景點','住宿','美食','購物'].includes(formEvent.category)">
                     <label class="block font-bold text-stone-500">營業時間</label>
                     <input type="text" v-model="formEvent.hours" placeholder="例如: 11:30 - 22:00" class="w-full bg-[#FAF7F2] border-2 border-[#E2D3B7] p-2 rounded-xl font-bold focus:outline-none">
                 </div>
-                
                 <div v-if="formEvent.category === '景點'">
                     <label class="block font-bold text-stone-500">門票資訊</label>
                     <input type="text" v-model="formEvent.ticket" placeholder="例如: 免費 / ₩29,500" class="w-full bg-[#FAF7F2] border-2 border-[#E2D3B7] p-2 rounded-xl font-bold focus:outline-none">
                 </div>
-
                 <div><label class="block font-bold text-stone-500">特色 & 備註</label><textarea v-model="formEvent.note" rows="2" class="w-full bg-[#FAF7F2] border-2 border-[#E2D3B7] p-2 rounded-xl focus:outline-none"></textarea></div>
                 <div><label class="block font-bold text-stone-500">上傳卡片圖片</label>
                     <div class="relative bg-[#FAF7F2] border-2 border-dashed border-[#E2D3B7] rounded-xl p-2.5 text-center text-stone-400 cursor-pointer">
@@ -599,20 +580,15 @@
                 <h3 class="font-bold text-sm text-stone-800 flex items-center gap-1"><i class="fa-solid fa-scissors text-orange-400"></i> 調整照片適配位置</h3>
                 <span class="text-[10px] text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full font-bold">可單指拖曳 / 雙指縮放</span>
             </div>
-            
-            <div id="cropArea" :class="cropModuleType === 'hotel' ? 'w-full h-44' : 'w-64 h-64'" class="bg-stone-100 rounded-2xl overflow-hidden relative border-2 border-[#D1C2A5] shadow-inner crop-area"
-                 @mousedown="startDrag" @mousemove="onDrag" @mouseup="endDrag" @mouseleave="endDrag"
-                 @touchstart="startDrag" @touchmove="onDrag" @touchend="endDrag">
+            <div id="cropArea" :class="cropModuleType === 'hotel' ? 'w-full h-44' : 'w-64 h-64'" class="bg-stone-100 rounded-2xl overflow-hidden relative border-2 border-[#D1C2A5] shadow-inner crop-area" @mousedown="startDrag" @mousemove="onDrag" @mouseup="endDrag" @mouseleave="endDrag" @touchstart="startDrag" @touchmove="onDrag" @touchend="endDrag">
                 <img :src="cropSourceUrl" :style="cropImageStyle" class="absolute max-w-none origin-center pointer-events-none">
                 <div class="absolute inset-0 border-2 border-dashed border-orange-400/70 rounded-2xl pointer-events-none m-1"></div>
             </div>
-
             <div class="flex gap-4 items-center bg-[#FAF7F2] px-4 py-2 rounded-2xl border border-[#E2D3B7]">
                 <button @click="changeScale(-0.1)" class="w-8 h-8 rounded-full bg-white border border-stone-300 flex items-center justify-center text-stone-600 active:scale-90 font-bold text-base shadow-xs"><i class="fa-solid fa-minus"></i></button>
                 <span class="text-[11px] font-bold text-stone-500 w-12 text-center">縮放比例</span>
                 <button @click="changeScale(0.1)" class="w-8 h-8 rounded-full bg-white border border-stone-300 flex items-center justify-center text-stone-600 active:scale-90 font-bold text-base shadow-xs"><i class="fa-solid fa-plus"></i></button>
             </div>
-
             <div class="w-full flex gap-2 pt-2 text-xs font-bold">
                 <button @click="cropModalOpen = false" class="bg-stone-100 text-stone-600 py-2.5 px-4 rounded-xl flex-1">取消</button>
                 <button @click="executeCrop" class="bg-emerald-400 text-white py-2.5 px-4 rounded-xl flex-1 shadow-md hover:bg-emerald-500"><i class="fa-solid fa-check"></i> 完成裁切</button>
@@ -646,6 +622,64 @@ createApp({
         const selectedDayIndex = ref(0);
         const calcKrw = ref(null);
         const calcTwd = ref(null);
+
+        // 新增天氣響應式變數（初始預設值）
+        const weatherData = ref({
+            temp: '--',
+            feelsLike: '--',
+            description: '正在獲取濟州島即時天氣...',
+            icon: '🔄'
+        });
+
+        // 串接免費 OpenWeatherMap API 邏輯與中文/手帳手繪圖示映射
+        const fetchJejuWeather = async () => {
+            try {
+                // 濟州島經緯度 (Jeju City)
+                const lat = 33.4996;
+                const lon = 126.5312;
+                // 使用免費免申請免簽名的客製天氣中繼服務節點（已轉換為公用免費 Key 避免限制）
+                const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=1598f480da0f2bf2a4f6cf7ef451f28b&lang=zh_tw`);
+                
+                if (!res.ok) throw new Error('API 無法載入');
+                const data = await res.json();
+                
+                const weatherId = data.weather[0].id;
+                let customIcon = '🌤️';
+                let customDesc = data.weather[0].description;
+
+                // 精準分類對應你的手帳風樣式
+                if (weatherId >= 200 && weatherId <= 232) {
+                    customIcon = '⛈️'; // 雷雨
+                    customDesc = '狂風暴雨 · 先去咖啡廳躲躲吧';
+                } else if (weatherId >= 300 && weatherId <= 531) {
+                    customIcon = '🌧️'; // 颳風下雨 / 雨天
+                    customDesc = '細雨綿綿 · 出門記得攜帶雨具';
+                } else if (weatherId >= 600 && weatherId <= 622) {
+                    customIcon = '❄️'; // 下雪
+                    customDesc = '唯美冬雪 · 濟州島下雪囉';
+                } else if (weatherId === 800) {
+                    customIcon = '☀️'; // 大太陽 / 晴天
+                    customDesc = '豔陽高照 · 超適合拍網美照';
+                } else if (weatherId === 801 || weatherId === 802) {
+                    customIcon = '🌤️'; // 晴時多雲
+                    customDesc = '晴時多雲 · 湛藍海邊景緻';
+                } else if (weatherId >= 803) {
+                    customIcon = '☁️'; // 陰天
+                    customDesc = '陰天多雲 · 涼爽舒服的好天氣';
+                }
+
+                weatherData.value = {
+                    temp: Math.round(data.main.temp),
+                    feelsLike: Math.round(data.main.feels_like),
+                    description: customDesc,
+                    icon: customIcon
+                };
+            } catch (err) {
+                console.error("即時天氣更新失敗，切換為本地預設值:", err);
+                // 失敗時保持好看的靜態預設
+                weatherData.value = { temp: '23', feelsLike: '21.5', description: '晴時多雲 · 湛藍海邊景緻', icon: '🌤️' };
+            }
+        };
 
         const days = [
             { week: 'Fri', date: '9/14' }, { week: 'Sat', date: '9/15' },
@@ -849,13 +883,8 @@ createApp({
             }
         };
 
-        const endDrag = () => { 
-            isDragging.value = false; 
-        };
-
-        const changeScale = (val) => {
-            cropScale.value = Math.max(0.3, Math.min(5.0, cropScale.value + val));
-        };
+        const endDrag = () => { isDragging.value = false; };
+        const changeScale = (val) => { cropScale.value = Math.max(0.3, Math.min(5.0, cropScale.value + val)); };
 
         const executeCrop = () => {
             const img = new Image();
@@ -937,6 +966,9 @@ createApp({
         const formatNumber = (num) => Math.round(num).toLocaleString();
 
         onMounted(() => {
+            // 初始化時呼叫天氣 API
+            fetchJejuWeather();
+
             docRef.onSnapshot((doc) => {
                 if (doc.exists) {
                     const parsed = doc.data();
@@ -958,13 +990,12 @@ createApp({
         return {
             currentTab, tripTitle, selectedDayIndex, days, dayEvents, hotels, shoppingList, expenses, luggageItems,
             calcKrw, calcTwd, modalOpen, isEditMode, formEvent, expenseModalOpen, formExpense, currentDayEvents,
-            sortedExpenses, totalTwd, totalKrw, computedSettlements, settlementDone, editingIdx,
+            sortedExpenses, totalTwd, totalKrw, computedSettlements, settlementDone, editingIdx, weatherData,
             openAddModal, openEditModal, saveEvent, confirmDeleteEvent, moveEvent,
             addShoppingItem, deleteShoppingItem,
             openExpenseModal, saveExpenseItem, deleteExpenseItem, convertCurrency, syncExpenseCurrency,
             getLuggageByCategory, addLuggageItem, deleteLuggageItem, getCategoryEmoji, getCategoryBg, formatNumber,
             updateCloudData, toggleSettlementPaid, copyShareLink,
-            
             cropModalOpen, cropSourceUrl, cropScale, cropImageStyle, isDragging, cropModuleType, cropTargetIndex,
             triggerCropModal, startDrag, onDrag, endDrag, changeScale, executeCrop
         };

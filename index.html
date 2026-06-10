@@ -972,7 +972,7 @@ createApp({
             };
         };
 
-        const addShoppingItem = () => { shoppingList.value.push({ name: '', image: '', purchased: false }); updateCloudData(); };
+        const addShoppingItem = () => { shoppingList.value.push({ id: Date.now(),name: '', image: '', purchased: false }); updateCloudData(); };
         const deleteShoppingItem = (idx) => { shoppingList.value.splice(idx, 1); updateCloudData(); };
 
         // 購物清單長按並移動排序邏輯 (Touch 事件優化)

@@ -382,7 +382,7 @@
             
             <div class="grid grid-cols-2 gap-3 shopping-grid">
                 <div v-for="(item, sIdx) in shoppingList" 
-                     :key="sIdx" 
+                     :key="item.id" 
                      :data-index="sIdx"
                      @touchstart="handleShoppingTouchStart($event, sIdx)"
                      @touchmove="handleShoppingTouchMove($event)"

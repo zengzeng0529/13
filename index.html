@@ -146,12 +146,10 @@
                 </div>
 
                 <div v-for="(event, eIdx) in currentDayEvents" :key="event.id" class="relative">
-                    <!-- 起點提示：只有在非航班大卡車且不是第一天時才顯示 -->
                     <div v-if="eIdx === 0 && selectedDayIndex > 0 && event.category !== '航班'" class="mb-3 flex items-center justify-center gap-1.5 text-[11px] bg-emerald-50 text-emerald-800 py-1.5 px-4 rounded-full border border-emerald-200 w-fit mx-auto font-bold">
                         <i class="fa-solid fa-hotel text-emerald-600"></i> 起點：從前一日住宿飯店出發計算交通
                     </div>
 
-                    <!-- 修正：讓第一天和第六天的第一個行程若為「航班」皆呈現精美大卡片 -->
                     <div v-if="eIdx === 0 && (selectedDayIndex === 0 || selectedDayIndex === 5) && event.category === '航班'" class="handbook-card border-orange-300 bg-gradient-to-br from-orange-50/50 via-white to-sky-50/30 p-4 pt-6">
                         <div class="washi-tape">FLIGHT INFO ✈️</div>
                         <div class="flex justify-between items-center border-b-2 border-dashed border-orange-200 pb-2 mb-3">
@@ -161,25 +159,23 @@
                             <span class="text-xs font-bold text-stone-400">編號: {{ event.flightNo || (selectedDayIndex === 0 ? 'IT 670' : 'IT 675') }}</span>
                         </div>
                         <div class="flex justify-between items-center text-center py-2">
-                            <!-- 去程顯示高雄KHH，回程顯示濟州CJU -->
                             <div>
                                 <div class="font-bold text-xl text-stone-800">{{ selectedDayIndex === 0 ? 'KHH' : 'CJU' }}</div>
                                 <div class="text-[10px] text-stone-400 font-bold">{{ selectedDayIndex === 0 ? '小港機場' : '濟州機場' }}</div>
-                                <div class="text-xs font-bold text-orange-500 mt-0.5">{{ event.time || (selectedDayIndex === 0 ? '15:50' : '18:50') }}</div>
+                                <div class="text-xs font-bold text-orange-500 mt-0.5">{{ selectedDayIndex === 0 ? '15:50' : '10:50' }}</div>
                             </div>
                             <div class="flex-1 flex flex-col items-center mx-2">
                                 <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full mb-1">
-                                    {{ selectedDayIndex === 0 ? '飛行 2 小時' : '飛行 2 小時 25 分' }}
+                                    {{ selectedDayIndex === 0 ? '飛行 2 小時' : '飛行 2 小時 15 分鐘' }}
                                 </span>
                                 <div class="w-full border-t-2 border-dashed border-orange-300 relative flex justify-center">
                                     <i class="fa-solid fa-plane text-orange-400 bg-white px-1 absolute -top-2"></i>
                                 </div>
                             </div>
-                            <!-- 去程抵達濟州CJU，回程抵達高雄KHH -->
                             <div>
                                 <div class="font-bold text-xl text-stone-800">{{ selectedDayIndex === 0 ? 'CJU' : 'KHH' }}</div>
                                 <div class="text-[10px] text-stone-400 font-bold">{{ selectedDayIndex === 0 ? '濟州機場' : '小港機場' }}</div>
-                                <div class="text-xs font-bold text-emerald-600 mt-0.5">{{ selectedDayIndex === 0 ? '10:50' : '12:15' }}</div>
+                                <div class="text-xs font-bold text-emerald-600 mt-0.5">{{ selectedDayIndex === 0 ? '18:50' : '12:15' }}</div>
                             </div>
                         </div>
                         <div class="mt-3 pt-2 border-t border-dashed border-stone-200 flex justify-between items-center">
@@ -191,7 +187,6 @@
                         </div>
                     </div>
 
-                    <!-- 一般行程項目樣式 -->
                     <div v-else class="handbook-card p-4 bg-white pt-6">
                         <div class="absolute top-2 right-3 flex items-center gap-2 z-20">
                             <button @click="moveEvent(eIdx, -1)" :disabled="eIdx === 0" class="text-stone-300 hover:text-orange-500 disabled:opacity-20 cursor-pointer text-xs"><i class="fa-solid fa-arrow-up"></i></button>
@@ -232,7 +227,6 @@
                         </div>
                     </div>
 
-                    <!-- 行程間的交通小區塊 -->
                     <div v-if="eIdx < currentDayEvents.length - 1" class="my-2 flex items-center justify-center gap-3">
                         <div class="h-5 border-l-2 border-dashed border-orange-200"></div>
                         <div class="bg-[#FAF7F2] text-stone-700 px-3 py-1 rounded-full text-[11px] flex items-center gap-1.5 border border-[#D1C2A5] shadow-xs">
@@ -253,7 +247,6 @@
             </button>
         </div>
 
-        <!-- 資訊頁籤 -->
         <div v-if="currentTab === 'info'" class="space-y-4">
             <div class="handbook-card p-4 pt-6">
                 <div class="washi-tape">EXCHANGE RATE 🪙</div>
@@ -293,7 +286,7 @@
                             <div class="font-bold text-stone-500 text-[10px]">航班: IT 675 </div>
                             <div class="font-bold text-stone-800">CJU ➔ KHH</div>
                             <div class="text-[10px] text-stone-400">起飛 10:50 / 抵達 12:15</div>
-                            <div class="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded-full inline-block font-bold">總飛行時間: 1小時25分</div>
+                            <div class="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded-full inline-block font-bold">總飛行時間: 2小時15分鐘</div>
                         </div>
                     </div>
                 </div>
@@ -306,7 +299,7 @@
                     <div class="flex justify-between"><span>車型款式：</span><span class="text-stone-600 font-bold">現代 Avante (或同級五人座)</span></div>
                     <div class="flex justify-between"><span>取還時間：</span><span class="text-stone-600 font-bold">9/14 20:00 ~ 9/19 08:00</span></div>
                     <div class="flex justify-between"><span>訂單號碼：</span><span class="text-amber-700 font-bold">LT-20260914-885A</span></div>
-                    <a href="https://map.naver.com/v5/search/%E4%B9%90%E5%A4%A9%E7%A7%9F%E8%BD%A6%E6%B5%8E%E5%B7%9E" target="_blank" class="block w-full bg-sky-50 text-sky-700 font-bold py-1.5 rounded-xl text-center text-[11px] border border-sky-200 mt-2"><i class="fa-solid fa-car-tunnel"></i> Naver Map</a>
+                    <a href="https://map.naver.com/v5/search/%E4%B9%90%E5%A4%A9%E7%A7%9F%E8%BD%A6%E6%B5%8E%E5%B7%9E" target="_blank" class="block w-full bg-sky-50 text-sky-700 font-bold py-1.5 rounded-xl text-center text-[11px] border border-sky-200 mt-2"><i class="fa-solid Hand-car-tunnel"></i> Naver Map</a>
                 </div>
             </div>
 
@@ -385,7 +378,6 @@
             </div>
         </div>
 
-        <!-- 購物清單頁籤 -->
         <div v-if="currentTab === 'shopping'" class="space-y-4">
             <div class="text-center text-[11px] text-orange-600/80 font-bold bg-orange-50 py-1 rounded-xl border border-orange-100">
                 💡 提示：長按整個商品小卡片即可上下自由拖曳調整排序哦！
@@ -432,7 +424,6 @@
             </button>
         </div>
 
-        <!-- 花費頁籤 -->
         <div v-if="currentTab === 'expenses'" class="space-y-4">
             <div class="bg-gradient-to-br from-orange-400 to-emerald-400 text-white p-5 rounded-3xl text-center shadow-md">
                 <div class="text-[10px] font-bold tracking-widest opacity-90">目前累積總花費 (台幣) 🍊</div>
@@ -477,7 +468,6 @@
             <button @click="openExpenseModal" class="fixed bottom-24 right-6 bg-emerald-400 text-white w-14 h-14 rounded-full flex items-center justify-center z-40 border-4 border-white transform active:scale-95 transition shadow-lg"><i class="fa-solid fa-plus text-xl"></i></button>
         </div>
 
-        <!-- 行李頁籤 -->
         <div v-if="currentTab === 'luggage'" class="space-y-4">
             <div class="handbook-card p-4 bg-orange-50/90 border-orange-300 pt-6">
                 <div class="washi-tape bg-red-500 text-white">⚠️ KOREA REGULATION</div>
@@ -518,7 +508,6 @@
 
     </main>
 
-    <!-- 底部導航欄 -->
     <div class="fixed bottom-4 left-4 right-4 max-w-sm mx-auto bg-white/95 backdrop-blur-md p-2 rounded-[24px] border-3 border-[#E2D3B7] flex justify-around items-center z-40 float-nav-shadow">
         <button @click="currentTab = 'schedule'" :class="currentTab === 'schedule' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
             <i class="fa-solid fa-location-dot text-sm"></i><span class="text-[10px]">行程</span>
@@ -537,7 +526,6 @@
         </button>
     </div>
 
-    <!-- 編輯/新增 行程 Modal -->
     <div v-if="modalOpen" class="fixed inset-0 bg-stone-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
         <div class="bg-white rounded-[32px] w-full max-w-sm p-5 border-4 border-[#E2D3B7] shadow-xl max-h-[85vh] overflow-y-auto space-y-3 text-xs">
             <h3 class="font-bold text-sm text-stone-800">📝 {{ isEditMode ? '編輯行程項目' : '新增全新行程' }}</h3>
@@ -580,7 +568,6 @@
         </div>
     </div>
 
-    <!-- 記帳 Modal -->
     <div v-if="expenseModalOpen" class="fixed inset-0 bg-stone-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
         <div class="bg-white rounded-[32px] w-full max-w-sm p-5 border-4 border-[#E2D3B7] shadow-xl space-y-3 text-xs">
             <h3 class="font-bold text-sm text-stone-800"><i class="fa-solid fa-coins text-orange-400"></i> 新增旅遊花費紀錄</h3>
@@ -629,7 +616,6 @@
         </div>
     </div>
 
-    <!-- 圖片裁切 Modal -->
     <div v-if="cropModalOpen" class="fixed inset-0 bg-stone-900/80 z-50 flex items-center justify-center p-4 backdrop-blur-md">
         <div class="bg-white rounded-[32px] w-full max-w-sm p-5 border-4 border-[#E2D3B7] shadow-2xl flex flex-col items-center space-y-4">
             <div class="w-full flex justify-between items-center border-b pb-2 border-stone-100">
@@ -716,10 +702,10 @@ createApp({
             { week: 'Tue', date: '9/18' }, { week: 'Wed', date: '9/19' }
         ];
 
-        // 預設行程加入了第六天的航班項目
+        // 預設行程（航班資訊已修正修正）
         const defaultDayEvents = {
             0: [
-                { id: 101, category: '航班', name: '抵達濟州國際機場 (小港出發)', time: '15:50', note: '', transitMode: 'drive', transitTime: '30分鐘', image: '', hours: '', ticket: '', flightNo: 'IT 670' },
+                { id: 101, category: '航班', name: '小港機場KHH ➔ 濟州機場CJU', time: '15:50', note: '去程航班', transitMode: 'drive', transitTime: '30分鐘', image: '', hours: '', ticket: '', flightNo: 'IT 670' },
                 { id: 102, category: '其他', name: '乐天租车济州店取車', time: '20:00', note: '辦理租車取車手續', transitMode: 'drive', transitTime: '30分鐘', image: '', hours: '', ticket: '' },
                 { id: 103, category: '美食', name: 'Sukseongdo济州总店 （黑豬肉）', time: '20:30', note: '濟州必吃老字號烤肉', transitMode: 'drive', transitTime: '90分鐘', image: '', hours: '11:30 - 22:00', ticket: '' }
             ],
@@ -728,7 +714,7 @@ createApp({
             ], 
             2: [], 3: [], 4: [], 
             5: [
-                { id: 601, category: '航班', name: '回程返國 (高雄小港)', time: '10:50', note: '回程虎航客機', transitMode: 'drive', transitTime: '0分鐘', image: '', hours: '', ticket: '', flightNo: 'IT 675' }
+                { id: 601, category: '航班', name: '濟州機場CJU ➔ 高雄機場KHH', time: '10:50', note: '回程返國', transitMode: 'drive', transitTime: '0分鐘', image: '', hours: '', ticket: '', flightNo: 'IT 675' }
             ]
         };
 

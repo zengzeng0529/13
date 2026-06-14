@@ -70,13 +70,12 @@
             user-select: none;
         }
         
-        /* 拖曳排序相關特效 */
         .shopping-grid {
             position: relative;
         }
         .shopping-item-card {
             transition: transform 0.2s ease, box-shadow 0.2s ease;
-            touch-action: none; /* 阻止手機預設滾動，利於長按拖動 */
+            touch-action: none;
         }
         .shopping-item-card.is-dragging {
             opacity: 0.7;
@@ -147,43 +146,52 @@
                 </div>
 
                 <div v-for="(event, eIdx) in currentDayEvents" :key="event.id" class="relative">
-                    <div v-if="eIdx === 0 && selectedDayIndex > 0" class="mb-3 flex items-center justify-center gap-1.5 text-[11px] bg-emerald-50 text-emerald-800 py-1.5 px-4 rounded-full border border-emerald-200 w-fit mx-auto font-bold">
+                    <!-- 起點提示：只有在非航班大卡車且不是第一天時才顯示 -->
+                    <div v-if="eIdx === 0 && selectedDayIndex > 0 && event.category !== '航班'" class="mb-3 flex items-center justify-center gap-1.5 text-[11px] bg-emerald-50 text-emerald-800 py-1.5 px-4 rounded-full border border-emerald-200 w-fit mx-auto font-bold">
                         <i class="fa-solid fa-hotel text-emerald-600"></i> 起點：從前一日住宿飯店出發計算交通
                     </div>
 
-                    <div v-if="selectedDayIndex === 0 && eIdx === 0 && event.category === '航班'" class="handbook-card border-orange-300 bg-gradient-to-br from-orange-50/50 via-white to-sky-50/30 p-4 pt-6">
+                    <!-- 修正：讓第一天和第六天的第一個行程若為「航班」皆呈現精美大卡片 -->
+                    <div v-if="eIdx === 0 && (selectedDayIndex === 0 || selectedDayIndex === 5) && event.category === '航班'" class="handbook-card border-orange-300 bg-gradient-to-br from-orange-50/50 via-white to-sky-50/30 p-4 pt-6">
                         <div class="washi-tape">FLIGHT INFO ✈️</div>
                         <div class="flex justify-between items-center border-b-2 border-dashed border-orange-200 pb-2 mb-3">
-                            <span class="text-xs font-bold text-orange-700 bg-orange-100 px-2.5 py-0.5 rounded-md"><i class="fa-solid fa-plane-arrival"></i> 第一天首站航班資訊</span>
-                            <span class="text-xs font-bold text-stone-400">編號: {{ event.flightNo || 'IT 670' }}</span>
+                            <span class="text-xs font-bold text-orange-700 bg-orange-100 px-2.5 py-0.5 rounded-md">
+                                <i class="fa-solid fa-plane-arrival"></i> {{ selectedDayIndex === 0 ? '第一天首站航班資訊' : '第六天回程航班資訊' }}
+                            </span>
+                            <span class="text-xs font-bold text-stone-400">編號: {{ event.flightNo || (selectedDayIndex === 0 ? 'IT 670' : 'IT 675') }}</span>
                         </div>
                         <div class="flex justify-between items-center text-center py-2">
+                            <!-- 去程顯示高雄KHH，回程顯示濟州CJU -->
                             <div>
-                                <div class="font-bold text-xl text-stone-800">KHH</div>
-                                <div class="text-[10px] text-stone-400 font-bold">小港機場</div>
-                                <div class="text-xs font-bold text-orange-500 mt-0.5">15:50</div>
+                                <div class="font-bold text-xl text-stone-800">{{ selectedDayIndex === 0 ? 'KHH' : 'CJU' }}</div>
+                                <div class="text-[10px] text-stone-400 font-bold">{{ selectedDayIndex === 0 ? '小港機場' : '濟州機場' }}</div>
+                                <div class="text-xs font-bold text-orange-500 mt-0.5">{{ event.time || (selectedDayIndex === 0 ? '15:50' : '10:50') }}</div>
                             </div>
                             <div class="flex-1 flex flex-col items-center mx-2">
-                                <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full mb-1">飛行 2 小時</span>
+                                <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full mb-1">
+                                    {{ selectedDayIndex === 0 ? '飛行 2 小時' : '飛行 1 小時 25 分' }}
+                                </span>
                                 <div class="w-full border-t-2 border-dashed border-orange-300 relative flex justify-center">
                                     <i class="fa-solid fa-plane text-orange-400 bg-white px-1 absolute -top-2"></i>
                                 </div>
                             </div>
+                            <!-- 去程抵達濟州CJU，回程抵達高雄KHH -->
                             <div>
-                                <div class="font-bold text-xl text-stone-800">CJU</div>
-                                <div class="text-[10px] text-stone-400 font-bold">濟州機場</div>
-                                <div class="text-xs font-bold text-emerald-600 mt-0.5">18:50</div>
+                                <div class="font-bold text-xl text-stone-800">{{ selectedDayIndex === 0 ? 'CJU' : 'KHH' }}</div>
+                                <div class="text-[10px] text-stone-400 font-bold">{{ selectedDayIndex === 0 ? '濟州機場' : '小港機場' }}</div>
+                                <div class="text-xs font-bold text-emerald-600 mt-0.5">{{ selectedDayIndex === 0 ? '18:50' : '12:15' }}</div>
                             </div>
                         </div>
                         <div class="mt-3 pt-2 border-t border-dashed border-stone-200 flex justify-between items-center">
                             <span class="text-[11px] text-stone-500 font-medium">備註: {{ event.note }}</span>
                             <div class="flex gap-2">
-                                <button @click="openEditModal(event, eIdx)" class="text-[11px] text-orange-400 font-bold"><i class="fa-solid fa-pen"></i> 編輯</button>
+                                <button @click="openEditModal(event, eIdx)" class="text-[11px] text-orange-400 font-bold cursor-pointer"><i class="fa-solid fa-pen"></i> 編輯</button>
                                 <a :href="'https://map.naver.com/v5/search/' + encodeURIComponent('濟州國際機場')" target="_blank" class="text-[11px] text-emerald-600 font-bold"><i class="fa-solid fa-location-arrow"></i> Naver Map</a>
                             </div>
                         </div>
                     </div>
 
+                    <!-- 一般行程項目樣式 -->
                     <div v-else class="handbook-card p-4 bg-white pt-6">
                         <div class="absolute top-2 right-3 flex items-center gap-2 z-20">
                             <button @click="moveEvent(eIdx, -1)" :disabled="eIdx === 0" class="text-stone-300 hover:text-orange-500 disabled:opacity-20 cursor-pointer text-xs"><i class="fa-solid fa-arrow-up"></i></button>
@@ -224,6 +232,7 @@
                         </div>
                     </div>
 
+                    <!-- 行程間的交通小區塊 -->
                     <div v-if="eIdx < currentDayEvents.length - 1" class="my-2 flex items-center justify-center gap-3">
                         <div class="h-5 border-l-2 border-dashed border-orange-200"></div>
                         <div class="bg-[#FAF7F2] text-stone-700 px-3 py-1 rounded-full text-[11px] flex items-center gap-1.5 border border-[#D1C2A5] shadow-xs">
@@ -244,6 +253,7 @@
             </button>
         </div>
 
+        <!-- 資訊頁籤 -->
         <div v-if="currentTab === 'info'" class="space-y-4">
             <div class="handbook-card p-4 pt-6">
                 <div class="washi-tape">EXCHANGE RATE 🪙</div>
@@ -375,6 +385,7 @@
             </div>
         </div>
 
+        <!-- 購物清單頁籤 -->
         <div v-if="currentTab === 'shopping'" class="space-y-4">
             <div class="text-center text-[11px] text-orange-600/80 font-bold bg-orange-50 py-1 rounded-xl border border-orange-100">
                 💡 提示：長按整個商品小卡片即可上下自由拖曳調整排序哦！
@@ -421,6 +432,7 @@
             </button>
         </div>
 
+        <!-- 花費頁籤 -->
         <div v-if="currentTab === 'expenses'" class="space-y-4">
             <div class="bg-gradient-to-br from-orange-400 to-emerald-400 text-white p-5 rounded-3xl text-center shadow-md">
                 <div class="text-[10px] font-bold tracking-widest opacity-90">目前累積總花費 (台幣) 🍊</div>
@@ -465,6 +477,7 @@
             <button @click="openExpenseModal" class="fixed bottom-24 right-6 bg-emerald-400 text-white w-14 h-14 rounded-full flex items-center justify-center z-40 border-4 border-white transform active:scale-95 transition shadow-lg"><i class="fa-solid fa-plus text-xl"></i></button>
         </div>
 
+        <!-- 行李頁籤 -->
         <div v-if="currentTab === 'luggage'" class="space-y-4">
             <div class="handbook-card p-4 bg-orange-50/90 border-orange-300 pt-6">
                 <div class="washi-tape bg-red-500 text-white">⚠️ KOREA REGULATION</div>
@@ -505,6 +518,7 @@
 
     </main>
 
+    <!-- 底部導航欄 -->
     <div class="fixed bottom-4 left-4 right-4 max-w-sm mx-auto bg-white/95 backdrop-blur-md p-2 rounded-[24px] border-3 border-[#E2D3B7] flex justify-around items-center z-40 float-nav-shadow">
         <button @click="currentTab = 'schedule'" :class="currentTab === 'schedule' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
             <i class="fa-solid fa-location-dot text-sm"></i><span class="text-[10px]">行程</span>
@@ -523,6 +537,7 @@
         </button>
     </div>
 
+    <!-- 編輯/新增 行程 Modal -->
     <div v-if="modalOpen" class="fixed inset-0 bg-stone-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
         <div class="bg-white rounded-[32px] w-full max-w-sm p-5 border-4 border-[#E2D3B7] shadow-xl max-h-[85vh] overflow-y-auto space-y-3 text-xs">
             <h3 class="font-bold text-sm text-stone-800">📝 {{ isEditMode ? '編輯行程項目' : '新增全新行程' }}</h3>
@@ -540,7 +555,7 @@
                     </select>
                 </div>
                 <div><label class="block font-bold text-stone-500">名稱</label><input type="text" v-model="formEvent.name" class="w-full bg-[#FAF7F2] border-2 border-[#E2D3B7] p-2 rounded-xl font-bold focus:outline-none"></div>
-                <div><label class="block font-bold text-stone-500">抵達時間 (24小時滾輪)</label><input type="time" v-model="formEvent.time" class="w-full bg-[#FAF7F2] border-2 border-[#E2D3B7] p-2 rounded-xl font-bold focus:outline-none"></div>
+                <div><label class="block font-bold text-stone-500">抵達時間</label><input type="time" v-model="formEvent.time" class="w-full bg-[#FAF7F2] border-2 border-[#E2D3B7] p-2 rounded-xl font-bold focus:outline-none"></div>
                 <div v-if="['景點','住宿','美食','購物'].includes(formEvent.category)">
                     <label class="block font-bold text-stone-500">營業時間</label>
                     <input type="text" v-model="formEvent.hours" placeholder="例如: 11:30 - 22:00" class="w-full bg-[#FAF7F2] border-2 border-[#E2D3B7] p-2 rounded-xl font-bold focus:outline-none">
@@ -565,6 +580,7 @@
         </div>
     </div>
 
+    <!-- 記帳 Modal -->
     <div v-if="expenseModalOpen" class="fixed inset-0 bg-stone-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
         <div class="bg-white rounded-[32px] w-full max-w-sm p-5 border-4 border-[#E2D3B7] shadow-xl space-y-3 text-xs">
             <h3 class="font-bold text-sm text-stone-800"><i class="fa-solid fa-coins text-orange-400"></i> 新增旅遊花費紀錄</h3>
@@ -613,6 +629,7 @@
         </div>
     </div>
 
+    <!-- 圖片裁切 Modal -->
     <div v-if="cropModalOpen" class="fixed inset-0 bg-stone-900/80 z-50 flex items-center justify-center p-4 backdrop-blur-md">
         <div class="bg-white rounded-[32px] w-full max-w-sm p-5 border-4 border-[#E2D3B7] shadow-2xl flex flex-col items-center space-y-4">
             <div class="w-full flex justify-between items-center border-b pb-2 border-stone-100">
@@ -662,7 +679,6 @@ createApp({
         const calcKrw = ref(null);
         const calcTwd = ref(null);
 
-        // 長按排序響應式變數
         const draggingShoppingIndex = ref(null);
         let longPressTimer = null;
         let isLongPressed = false;
@@ -676,45 +692,20 @@ createApp({
 
         const fetchJejuWeather = async () => {
             try {
-                const lat = 33.4996;
-                const lon = 126.5312;
+                const lat = 33.4996; const lon = 126.5312;
                 const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=1598f480da0f2bf2a4f6cf7ef451f28b&lang=zh_tw`);
-                
                 if (!res.ok) throw new Error('API 無法載入');
                 const data = await res.json();
-                
                 const weatherId = data.weather[0].id;
-                let customIcon = '🌤️';
-                let customDesc = data.weather[0].description;
-
-                if (weatherId >= 200 && weatherId <= 232) {
-                    customIcon = '⛈️';
-                    customDesc = '狂風暴雨 · 先去咖啡廳躲躲吧';
-                } else if (weatherId >= 300 && weatherId <= 531) {
-                    customIcon = '🌧️';
-                    customDesc = '細雨綿綿 · 出門記得攜帶雨具';
-                } else if (weatherId >= 600 && weatherId <= 622) {
-                    customIcon = '❄️';
-                    customDesc = '唯美冬雪 · 濟州島下雪囉';
-                } else if (weatherId === 800) {
-                    customIcon = '☀️';
-                    customDesc = '豔陽高照 · 超適合拍網美照';
-                } else if (weatherId === 801 || weatherId === 802) {
-                    customIcon = '🌤️';
-                    customDesc = '晴時多雲 · 湛藍海邊景緻';
-                } else if (weatherId >= 803) {
-                    customIcon = '☁️';
-                    customDesc = '陰天多雲 · 涼爽舒服的好天氣';
-                }
-
-                weatherData.value = {
-                    temp: Math.round(data.main.temp),
-                    feelsLike: Math.round(data.main.feels_like),
-                    description: customDesc,
-                    icon: customIcon
-                };
+                let customIcon = '🌤️'; let customDesc = data.weather[0].description;
+                if (weatherId >= 200 && weatherId <= 232) { customIcon = '⛈️'; customDesc = '狂風暴雨 · 先去咖啡廳躲躲吧'; }
+                else if (weatherId >= 300 && weatherId <= 531) { customIcon = '🌧️'; customDesc = '細雨綿綿 · 出門記得攜帶雨具'; }
+                else if (weatherId >= 600 && weatherId <= 622) { customIcon = '❄️'; customDesc = '唯美冬雪 · 濟州島下雪囉'; }
+                else if (weatherId === 800) { customIcon = '☀️'; customDesc = '豔陽高照 · 超適合拍網美照'; }
+                else if (weatherId === 801 || weatherId === 802) { customIcon = '🌤️'; customDesc = '晴時多雲 · 湛藍海邊景緻'; }
+                else if (weatherId >= 803) { customIcon = '☁️'; customDesc = '陰天多雲 · 涼爽舒服的好天氣'; }
+                weatherData.value = { temp: Math.round(data.main.temp), feelsLike: Math.round(data.main.feels_like), description: customDesc, icon: customIcon };
             } catch (err) {
-                console.error("即時天氣更新失敗，切換為本地預設值:", err);
                 weatherData.value = { temp: '23', feelsLike: '21.5', description: '晴時多雲 · 湛藍海邊景緻', icon: '🌤️' };
             }
         };
@@ -725,6 +716,7 @@ createApp({
             { week: 'Tue', date: '9/18' }, { week: 'Wed', date: '9/19' }
         ];
 
+        // 預設行程加入了第六天的航班項目
         const defaultDayEvents = {
             0: [
                 { id: 101, category: '航班', name: '抵達濟州國際機場 (小港出發)', time: '18:50', note: '去程德威航空機票', transitMode: 'drive', transitTime: '30分鐘', image: '', hours: '', ticket: '', flightNo: 'IT 670' },
@@ -733,7 +725,11 @@ createApp({
             ],
             1: [
                 { id: 201, category: '景點', name: '9.81Park济州 (開賽車）', time: '09:00', note: '瘋狂刺激重力賽車體驗', transitMode: 'drive', transitTime: '60分鐘', image: '', hours: '09:00 - 18:30', ticket: '₩29,500' }
-            ], 2: [], 3: [], 4: [], 5: []
+            ], 
+            2: [], 3: [], 4: [], 
+            5: [
+                { id: 601, category: '航班', name: '回程返國 (高雄小港)', time: '10:50', note: '回程虎航客機', transitMode: 'drive', transitTime: '0分鐘', image: '', hours: '', ticket: '', flightNo: 'IT 675' }
+            ]
         };
 
         const defaultHotels = [
@@ -748,15 +744,12 @@ createApp({
         const hotels = ref([...defaultHotels]);
         const shoppingList = ref([{ name: '濟州柑橘巧克力', image: '', purchased: false }]);
         const expenses = ref([{ id: 901, category: '住宿', name: '第一晚別墅預付款', date: '2026-09-14', krw: 126000, twd: 3000, payer: '曾曾', shares: ['曾曾', '小陳', '涵涵', '小恩'], payMethod: '信用卡', note: '' }]);
-        const luggageItems = ref([
-            { id: 501, category: '隨身背包', name: '護照、台灣駕照與國際駕照', qty: 1, checked: true }
-        ]);
+        const luggageItems = ref([{ id: 501, category: '隨身背包', name: '護照、台灣駕照與國際駕照', qty: 1, checked: true }]);
         const cloudPaidSettlements = ref({});
 
         const modalOpen = ref(false);
         const isEditMode = ref(false);
         const editingIdx = ref(null);
-        // 修正：表單物件中加入 targetDayIndex 來追蹤目標天數
         const formEvent = ref({ category: '景點', name: '', time: '12:00', note: '', image: '', transitMode: 'drive', transitTime: '15分鐘', hours: '', ticket: '', targetDayIndex: 0 });
 
         const expenseModalOpen = ref(false);
@@ -791,10 +784,8 @@ createApp({
             const pool = { '曾曾': 0, '小陳': 0, '涵涵': 0, '小恩': 0 };
             expenses.value.forEach(e => {
                 if (e.payer === '公費') return;
-                const amt = Number(e.twd || 0);
-                if (amt <= 0) return;
-                pool[e.payer] += amt;
-                const count = e.shares.length;
+                const amt = Number(e.twd || 0); if (amt <= 0) return;
+                pool[e.payer] += amt; const count = e.shares.length;
                 if (count > 0) {
                     const per = amt / count;
                     e.shares.forEach(m => { if (pool[m] !== undefined) pool[m] -= per; });
@@ -805,8 +796,7 @@ createApp({
                 if (bal < -0.1) debtors.push({ name, bal: -bal });
                 else if (bal > 0.1) creditors.push({ name, bal });
             }
-            const matrix = [];
-            let i = 0, j = 0;
+            const matrix = []; let i = 0, j = 0;
             while (i < debtors.length && j < creditors.length) {
                 const d = debtors[i], c = creditors[j];
                 const settleAmt = Math.min(d.bal, c.bal);
@@ -846,14 +836,12 @@ createApp({
             });
         };
 
-        // 修正：開啟新增彈窗時，將 targetDayIndex 初始化為當前選擇的天數
         const openAddModal = () => { 
             isEditMode.value = false; 
             formEvent.value = { category: '景點', name: '', time: '12:00', note: '', image: '', transitMode: 'drive', transitTime: '15分鐘', hours: '', ticket: '', targetDayIndex: selectedDayIndex.value }; 
             modalOpen.value = true; 
         };
         
-        // 修正：開啟編輯彈窗時，同步帶入當前行程所在的天數索引
         const openEditModal = (ev, idx) => { 
             isEditMode.value = true; 
             editingIdx.value = idx; 
@@ -861,44 +849,31 @@ createApp({
             modalOpen.value = true; 
         };
         
-        // 修正：處理行程跨日期移動的核心邏輯
         const saveEvent = () => {
             const targetDay = formEvent.value.targetDayIndex;
-            
-            // 確保目標天數的陣列存在
-            if (!dayEvents.value[targetDay]) {
-                dayEvents.value[targetDay] = [];
-            }
+            if (!dayEvents.value[targetDay]) dayEvents.value[targetDay] = [];
 
             if (isEditMode.value) {
-                // 如果是在「編輯模式」
                 if (targetDay === selectedDayIndex.value) {
-                    // 狀況 A：日期沒有變，單純修改原卡片內容
                     dayEvents.value[selectedDayIndex.value][editingIdx.value] = { ...formEvent.value };
                 } else {
-                    // 狀況 B：日期改變了！從原本的天數陣列移除，並推入新天數的陣列中
                     dayEvents.value[selectedDayIndex.value].splice(editingIdx.value, 1);
                     dayEvents.value[targetDay].push({ ...formEvent.value });
-                    // 自動跳轉切換視角至新日期，方便使用者確認
                     selectedDayIndex.value = targetDay;
                 }
             } else {
-                // 如果是在「全新新增模式」
                 formEvent.value.id = Date.now(); 
                 dayEvents.value[targetDay].push({ ...formEvent.value });
-                // 新增完畢後自動跳轉切換視角至該日期
                 selectedDayIndex.value = targetDay;
             }
             
-            // 對目標天數的行程重新進行 24 小時時間排序
             dayEvents.value[targetDay].sort((a, b) => a.time.localeCompare(b.time));
-            
             modalOpen.value = false;
-            updateCloudData(); // 同步上傳 Firebase 雲端資料庫
+            updateCloudData();
         };
 
         const confirmDeleteEvent = () => {
-            if(confirm("🚨 確定要刪除這筆行程項目嗎？此動作將無法復原。")) {
+            if(confirm("🚨 確定要刪除這筆行程項目嗎？")) {
                 dayEvents.value[selectedDayIndex.value].splice(editingIdx.value, 1);
                 modalOpen.value = false;
                 updateCloudData();
@@ -918,15 +893,11 @@ createApp({
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (event) => {
-                    cropSourceUrl.value = event.target.result;
-                    cropTargetIndex.value = targetIdx;
-                    cropModuleType.value = type;
-                    cropScale.value = 1.0;
-                    cropOffset.value = { x: 0, y: 0 };
+                    cropSourceUrl.value = event.target.result; cropTargetIndex.value = targetIdx;
+                    cropModuleType.value = type; cropScale.value = 1.0; cropOffset.value = { x: 0, y: 0 };
                     cropModalOpen.value = true;
                 };
-                reader.readAsDataURL(file);
-                e.target.value = '';
+                reader.readAsDataURL(file); e.target.value = '';
             }
         };
 
@@ -938,8 +909,7 @@ createApp({
 
         const startDrag = (e) => {
             if (e.touches && e.touches.length === 2) {
-                isDragging.value = false;
-                startTouchDist.value = getTouchDistance(e.touches);
+                isDragging.value = false; startTouchDist.value = getTouchDistance(e.touches);
             } else {
                 isDragging.value = true;
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -966,105 +936,49 @@ createApp({
         const changeScale = (val) => { cropScale.value = Math.max(0.3, Math.min(5.0, cropScale.value + val)); };
 
         const executeCrop = () => {
-            const img = new Image();
-            img.src = cropSourceUrl.value;
+            const img = new Image(); img.src = cropSourceUrl.value;
             img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const cropAreaEl = document.getElementById('cropArea');
-                const displayWidth = cropAreaEl ? cropAreaEl.clientWidth : 256;
-                const displayHeight = cropAreaEl ? cropAreaEl.clientHeight : 256;
-
-                if (cropModuleType.value === 'hotel') {
-                    canvas.width = 600;
-                    canvas.height = 330;
-                } else {
-                    canvas.width = 250;
-                    canvas.height = 250;
-                }
-                
-                const ctx = canvas.getContext('2d');
-                let renderW, renderH;
-                const imgRatio = img.width / img.height;
-                const areaRatio = displayWidth / displayHeight;
-                if (imgRatio > areaRatio) {
-                    renderW = displayWidth;
-                    renderH = displayWidth / imgRatio;
-                } else {
-                    renderH = displayHeight;
-                    renderW = displayHeight * imgRatio;
-                }
-
+                const canvas = document.createElement('canvas'); const cropAreaEl = document.getElementById('cropArea');
+                const displayWidth = cropAreaEl ? cropAreaEl.clientWidth : 256; const displayHeight = cropAreaEl ? cropAreaEl.clientHeight : 256;
+                if (cropModuleType.value === 'hotel') { canvas.width = 600; canvas.height = 330; } else { canvas.width = 250; canvas.height = 250; }
+                const ctx = canvas.getContext('2d'); let renderW, renderH; const imgRatio = img.width / img.height; const areaRatio = displayWidth / displayHeight;
+                if (imgRatio > areaRatio) { renderW = displayWidth; renderH = displayWidth / imgRatio; } else { renderH = displayHeight; renderW = displayHeight * imgRatio; }
                 const finalScale = cropScale.value * (renderW / img.width) * (canvas.width / displayWidth);
-                const canvasOffsetX = cropOffset.value.x * (canvas.width / displayWidth);
-                const canvasOffsetY = cropOffset.value.y * (canvas.height / displayHeight);
-
-                ctx.fillStyle = '#FFFFFF';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                ctx.translate(canvas.width / 2 + canvasOffsetX, canvas.height / 2 + canvasOffsetY);
-                ctx.scale(finalScale, finalScale);
+                const canvasOffsetX = cropOffset.value.x * (canvas.width / displayWidth); const canvasOffsetY = cropOffset.value.y * (canvas.height / displayHeight);
+                ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.translate(canvas.width / 2 + canvasOffsetX, canvas.height / 2 + canvasOffsetY); ctx.scale(finalScale, finalScale);
                 ctx.drawImage(img, -img.width / 2, -img.height / 2);
-
                 const finalBase64 = canvas.toDataURL('image/jpeg', 0.45);
-
-                if (cropModuleType.value === 'schedule') {
-                    formEvent.value.image = finalBase64;
-                } else if (cropModuleType.value === 'hotel') {
-                    hotels.value[cropTargetIndex.value].img = finalBase64;
-                    updateCloudData(); 
-                } else {
-                    shoppingList.value[cropTargetIndex.value].image = finalBase64;
-                    updateCloudData();
-                }
+                if (cropModuleType.value === 'schedule') { formEvent.value.image = finalBase64; } 
+                else if (cropModuleType.value === 'hotel') { hotels.value[cropTargetIndex.value].img = finalBase64; updateCloudData(); } 
+                else { shoppingList.value[cropTargetIndex.value].image = finalBase64; updateCloudData(); }
                 cropModalOpen.value = false;
             };
         };
 
-        const addShoppingItem = () => { shoppingList.value.push({ id: Date.now(),name: '', image: '', purchased: false }); updateCloudData(); };
+        const addShoppingItem = () => { shoppingList.value.push({ id: Date.now(), name: '', image: '', purchased: false }); updateCloudData(); };
         const deleteShoppingItem = (idx) => { shoppingList.value.splice(idx, 1); updateCloudData(); };
 
-        // 購物清單長按並移動排序邏輯 (Touch 事件優化)
         const handleShoppingTouchStart = (e, index) => {
             if (e.target.closest('button') || e.target.closest('input') || e.target.closest('label')) return;
-            isLongPressed = false;
-            draggingShoppingIndex.value = index;
-            longPressTimer = setTimeout(() => {
-                isLongPressed = true;
-                if (navigator.vibrate) navigator.vibrate(50);
-            }, 500);
+            isLongPressed = false; draggingShoppingIndex.value = index;
+            longPressTimer = setTimeout(() => { isLongPressed = true; if (navigator.vibrate) navigator.vibrate(50); }, 500);
         };
-
         const handleShoppingTouchMove = (e) => {
             if (draggingShoppingIndex.value === null) return;
-            if (!isLongPressed) {
-                clearTimeout(longPressTimer);
-                draggingShoppingIndex.value = null;
-                return;
-            }
-            e.preventDefault();
-            const touch = e.touches[0];
-            const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
-            if (!targetEl) return;
-            const currentItemEl = targetEl.closest('.shopping-item-card');
+            if (!isLongPressed) { clearTimeout(longPressTimer); draggingShoppingIndex.value = null; return; }
+            e.preventDefault(); const touch = e.touches[0]; const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (!targetEl) return; const currentItemEl = targetEl.closest('.shopping-item-card');
             if (currentItemEl && currentItemEl.dataset.index !== undefined) {
                 const targetIndex = parseInt(currentItemEl.dataset.index, 10);
                 if (targetIndex !== draggingShoppingIndex.value) {
                     const temp = shoppingList.value[draggingShoppingIndex.value];
                     shoppingList.value[draggingShoppingIndex.value] = shoppingList.value[targetIndex];
-                    shoppingList.value[targetIndex] = temp;
-                    draggingShoppingIndex.value = targetIndex;
+                    shoppingList.value[targetIndex] = temp; draggingShoppingIndex.value = targetIndex;
                 }
             }
         };
-
-        const handleShoppingTouchEnd = (e) => {
-            clearTimeout(longPressTimer);
-            if (isLongPressed && draggingShoppingIndex.value !== null) {
-                updateCloudData();
-            }
-            draggingShoppingIndex.value = null;
-            isLongPressed = false;
-        };
+        const handleShoppingTouchEnd = (e) => { clearTimeout(longPressTimer); if (isLongPressed && draggingShoppingIndex.value !== null) { updateCloudData(); } draggingShoppingIndex.value = null; isLongPressed = false; };
 
         const openExpenseModal = () => { formExpense.value = { category: '飲食', name: '', date: new Date().toISOString().split('T')[0], krw: null, twd: null, payer: '曾曾', shares: ['曾曾', '小陳', '涵涵', '小恩'], payMethod: '現金' }; expenseModalOpen.value = true; };
         const saveExpenseItem = () => { formExpense.value.id = Date.now(); expenses.value.push({ ...formExpense.value }); expenseModalOpen.value = false; updateCloudData(); };
@@ -1102,8 +1016,6 @@ createApp({
                 } else {
                     updateCloudData();
                 }
-            }, (error) => {
-                console.error("雲端讀取資料失敗:", error);
             });
         });
 

@@ -861,6 +861,7 @@ createApp({
 
         const openAddModal = () => { 
             isEditMode.value = false; 
+            editingIdx.value = null; // 新增行程時，索引設為 null
             formEvent.value = { category: '景點', name: '', time: '12:00', note: '', image: '', transitMode: 'drive', transitTime: '15分鐘', hours: '', ticket: '', targetDayIndex: selectedDayIndex.value }; 
             modalOpen.value = true; 
             triggerAllResizes(); // 打開時校正輸入框高度
@@ -974,7 +975,15 @@ createApp({
                 ctx.translate(canvas.width / 2 + canvasOffsetX, canvas.height / 2 + canvasOffsetY); ctx.scale(finalScale, finalScale);
                 ctx.drawImage(img, -img.width / 2, -img.height / 2);
                 const finalBase64 = canvas.toDataURL('image/jpeg', 0.45);
-                if (cropModuleType.value === 'schedule') { formEvent.value.image = finalBase64; } 
+                
+                if (cropModuleType.value === 'schedule') { 
+                    formEvent.value.image = finalBase64; 
+                    // 【關鍵修正】若是編輯現有行程，立即同步至畫面的陣列中並更新雲端
+                    if (isEditMode.value && editingIdx.value !== null) {
+                        dayEvents.value[selectedDayIndex.value][editingIdx.value].image = finalBase64;
+                        updateCloudData();
+                    }
+                } 
                 else if (cropModuleType.value === 'hotel') { hotels.value[cropTargetIndex.value].img = finalBase64; updateCloudData(); } 
                 else { shoppingList.value[cropTargetIndex.value].image = finalBase64; updateCloudData(); }
                 cropModalOpen.value = false;

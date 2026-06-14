@@ -85,7 +85,7 @@
             border-color: #f97316;
         }
 
-        /* 備註欄動態撐高神奇黑魔法 */
+        /* 備註欄動態撐高 CSS 組合 */
         .auto-expand-wrapper {
             display: grid;
         }
@@ -131,6 +131,7 @@
 
     <main class="flex-1 p-4">
         
+        <!-- 行程分頁 -->
         <div v-if="currentTab === 'schedule'" class="space-y-4">
             
             <div class="flex gap-2 overflow-x-auto pb-2 hide-scrollbar snap-x">
@@ -170,6 +171,7 @@
                         <i class="fa-solid fa-hotel text-emerald-600"></i> 起點：從前一日住宿飯店出發計算交通
                     </div>
 
+                    <!-- 航班卡片 -->
                     <div v-if="eIdx === 0 && (selectedDayIndex === 0 || selectedDayIndex === 5) && event.category === '航班'" class="handbook-card border-orange-300 bg-gradient-to-br from-orange-50/50 via-white to-sky-50/30 p-4 pt-6">
                         <div class="washi-tape">FLIGHT INFO ✈️</div>
                         <div class="flex justify-between items-center border-b-2 border-dashed border-orange-200 pb-2 mb-3">
@@ -207,6 +209,7 @@
                         </div>
                     </div>
 
+                    <!-- 一般景點卡片 -->
                     <div v-else class="handbook-card p-4 bg-white pt-6">
                         <div class="absolute top-2 right-3 flex items-center gap-2 z-20">
                             <button @click="moveEvent(eIdx, -1)" :disabled="eIdx === 0" class="text-stone-300 hover:text-orange-500 disabled:opacity-20 cursor-pointer text-xs"><i class="fa-solid fa-arrow-up"></i></button>
@@ -247,6 +250,7 @@
                         </div>
                     </div>
 
+                    <!-- 交通銜接線 -->
                     <div v-if="eIdx < currentDayEvents.length - 1" class="my-2 flex items-center justify-center gap-3">
                         <div class="h-5 border-l-2 border-dashed border-orange-200"></div>
                         <div class="bg-[#FAF7F2] text-stone-700 px-3 py-1 rounded-full text-[11px] flex items-center gap-1.5 border border-[#D1C2A5] shadow-xs">
@@ -267,6 +271,7 @@
             </button>
         </div>
 
+        <!-- 資訊分頁 -->
         <div v-if="currentTab === 'info'" class="space-y-4">
             <div class="handbook-card p-4 pt-6">
                 <div class="washi-tape">EXCHANGE RATE 🪙</div>
@@ -319,7 +324,8 @@
                     <div class="flex justify-between"><span>車型款式：</span><span class="text-stone-600 font-bold">現代 Avante (或同級五人座)</span></div>
                     <div class="flex justify-between"><span>取還時間：</span><span class="text-stone-600 font-bold">9/14 20:00 ~ 9/19 08:00</span></div>
                     <div class="flex justify-between"><span>訂單號碼：</span><span class="text-amber-700 font-bold">LT-20260914-885A</span></div>
-                    <a href="https://map.naver.com/v5/search/%E4%B9%90%E5%A4%A9%E7%A7%9F%E8%BD%A6%E6%B5%8E%E5%B7%9E" target="_blank" class="block w-full bg-sky-50 text-sky-700 font-bold py-1.5 rounded-xl text-center text-[11px] border border-sky-200 mt-2"><i class="fa-solid Hand-car-tunnel"></i> Naver Map</a>
+                    <!-- 修正：修復了 fa-car 圖示名稱 -->
+                    <a href="https://map.naver.com/v5/search/%E4%B9%90%E5%A4%A9%E7%A7%9F%E8%BD%A6%E6%B5%8E%E5%B7%9E" target="_blank" class="block w-full bg-sky-50 text-sky-700 font-bold py-1.5 rounded-xl text-center text-[11px] border border-sky-200 mt-2"><i class="fa-solid fa-car"></i> Naver Map</a>
                 </div>
             </div>
 
@@ -400,6 +406,7 @@
             </div>
         </div>
 
+        <!-- 購物清單分頁 -->
         <div v-if="currentTab === 'shopping'" class="space-y-4">
             <div class="text-center text-[11px] text-orange-600/80 font-bold bg-orange-50 py-1 rounded-xl border border-orange-100">
                 💡 提示：長按整個商品小卡片即可上下自由拖曳調整排序哦！
@@ -446,6 +453,7 @@
             </button>
         </div>
 
+        <!-- 花費記帳分頁 -->
         <div v-if="currentTab === 'expenses'" class="space-y-4">
             <div class="bg-gradient-to-br from-orange-400 to-emerald-400 text-white p-5 rounded-3xl text-center shadow-md">
                 <div class="text-[10px] font-bold tracking-widest opacity-90">目前累積總花費 (台幣) 🍊</div>
@@ -475,7 +483,8 @@
                             <span class="text-xs font-bold">{{ exp.name }}</span>
                             <span class="text-[9px] px-1.5 py-0.2 rounded bg-stone-100 text-stone-500 font-medium">{{ exp.payMethod }}</span>
                         </div>
-                        <div class="text-[10px] text-stone-400">📅 {{ exp.date · 代墊: <span class="font-bold text-orange-600">{{ exp.payer }}</span></div>
+                        <!-- 修正：將錯誤的中間點號 · 改為一般的 - 連字號，避免 Vue 渲染失敗 -->
+                        <div class="text-[10px] text-stone-400">📅 {{ exp.date }} - 代墊: <span class="font-bold text-orange-600">{{ exp.payer }}</span></div>
                         <div class="text-[10px] text-emerald-700 bg-emerald-50/70 px-2 py-0.5 rounded-lg w-fit font-bold">👥 分攤: {{ exp.shares.join(', ') }}</div>
                     </div>
                     <div class="text-right flex flex-col items-end gap-2">
@@ -490,6 +499,7 @@
             <button @click="openExpenseModal" class="fixed bottom-24 right-6 bg-emerald-400 text-white w-14 h-14 rounded-full flex items-center justify-center z-40 border-4 border-white transform active:scale-95 transition shadow-lg"><i class="fa-solid fa-plus text-xl"></i></button>
         </div>
 
+        <!-- 行李清單分頁 -->
         <div v-if="currentTab === 'luggage'" class="space-y-4">
             <div class="handbook-card p-4 bg-orange-50/90 border-orange-300 pt-6">
                 <div class="washi-tape bg-red-500 text-white">⚠️ KOREA REGULATION</div>
@@ -530,6 +540,7 @@
 
     </main>
 
+    <!-- 固定底部導覽列 -->
     <div class="fixed bottom-4 left-4 right-4 max-w-sm mx-auto bg-white/95 backdrop-blur-md p-2 rounded-[24px] border-3 border-[#E2D3B7] flex justify-around items-center z-40 float-nav-shadow">
         <button @click="currentTab = 'schedule'" :class="currentTab === 'schedule' ? 'bg-orange-400 text-white scale-105' : 'text-stone-600'" class="flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition duration-200 font-bold cursor-pointer">
             <i class="fa-solid fa-location-dot text-sm"></i><span class="text-[10px]">行程</span>
@@ -548,6 +559,7 @@
         </button>
     </div>
 
+    <!-- 行程編輯/彈出視窗 -->
     <div v-if="modalOpen" class="fixed inset-0 bg-stone-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
         <div class="bg-white rounded-[32px] w-full max-w-sm p-5 border-4 border-[#E2D3B7] shadow-xl max-h-[85vh] overflow-y-auto space-y-3 text-xs">
             <h3 class="font-bold text-sm text-stone-800">📝 {{ isEditMode ? '編輯行程項目' : '新增全新行程' }}</h3>
@@ -595,6 +607,7 @@
         </div>
     </div>
 
+    <!-- 記帳彈出視窗 -->
     <div v-if="expenseModalOpen" class="fixed inset-0 bg-stone-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
         <div class="bg-white rounded-[32px] w-full max-w-sm p-5 border-4 border-[#E2D3B7] shadow-xl space-y-3 text-xs">
             <h3 class="font-bold text-sm text-stone-800"><i class="fa-solid fa-coins text-orange-400"></i> 新增旅遊花費紀錄</h3>
@@ -643,6 +656,7 @@
         </div>
     </div>
 
+    <!-- 圖片剪裁彈出視窗 -->
     <div v-if="cropModalOpen" class="fixed inset-0 bg-stone-900/80 z-50 flex items-center justify-center p-4 backdrop-blur-md">
         <div class="bg-white rounded-[32px] w-full max-w-sm p-5 border-4 border-[#E2D3B7] shadow-2xl flex flex-col items-center space-y-4">
             <div class="w-full flex justify-between items-center border-b pb-2 border-stone-100">

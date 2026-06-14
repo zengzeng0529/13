@@ -702,10 +702,10 @@ createApp({
             { week: 'Tue', date: '9/18' }, { week: 'Wed', date: '9/19' }
         ];
 
-        // 預設行程（航班資訊已修正修正）
+        // 預設行程（第一天航班編號已修正為 IT 670）
         const defaultDayEvents = {
             0: [
-                { id: 101, category: '航班', name: '小港機場KHH ➔ 濟州機場CJU', time: '15:50', note: '去程航班', transitMode: 'drive', transitTime: '30分鐘', image: '', hours: '', ticket: '', flightNo: 'IT 670' },
+                { id: 101, category: '航班', name: '小港機場KHH ➔ 濟州機場CJU', time: '15:50', note: '去程2人行李總重：20公斤', transitMode: 'drive', transitTime: '30分鐘', image: '', hours: '', ticket: '', flightNo: 'IT 670' },
                 { id: 102, category: '其他', name: '乐天租车济州店取車', time: '20:00', note: '辦理租車取車手續', transitMode: 'drive', transitTime: '30分鐘', image: '', hours: '', ticket: '' },
                 { id: 103, category: '美食', name: 'Sukseongdo济州总店 （黑豬肉）', time: '20:30', note: '濟州必吃老字號烤肉', transitMode: 'drive', transitTime: '90分鐘', image: '', hours: '11:30 - 22:00', ticket: '' }
             ],
@@ -723,7 +723,7 @@ createApp({
             { name: '西歸浦舒適手帳旅宿 (Day 2)', orderId: 'LT-91502', checkIn: '9/15 15:00', checkOut: '9/16 11:00', phone: '+82-64-222-2222', address: '濟州特別自治道西歸浦市', img: '', note: '' },
             { name: '城山日出海景飯店 (Day 3)', orderId: 'LT-91603', checkIn: '9/16 15:00', checkOut: '9/17 11:00', phone: '+82-64-333-3333', address: '濟州特別自治道城山邑', img: '', note: '' },
             { name: '涯月落日設計風民宿 (Day 4)', orderId: 'LT-91704', checkIn: '9/17 15:00', checkOut: '9/18 11:00', phone: '+82-64-444-4444', address: '濟州特別自治道涯月邑', img: '', note: '' },
-            { name: '濟州市區購物精品飯店 (Day 5)', orderId: 'LT-91805', checkIn: '9/18 15:00', checkOut: '9/19 10:00', phone: '+82-64-555-5555', address: '濟州市連洞', img: '', note: '' }
+            { name: '濟州島精緻市區飯店 (Day 5)', orderId: 'LT-91805', checkIn: '9/18 15:00', checkOut: '9/19 10:00', phone: '+82-64-555-5555', address: '濟州市連洞', img: '', note: '' }
         ];
 
         const dayEvents = ref({...defaultDayEvents});

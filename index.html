@@ -527,6 +527,13 @@
         <div class="bg-white rounded-[32px] w-full max-w-sm p-5 border-4 border-[#E2D3B7] shadow-xl max-h-[85vh] overflow-y-auto space-y-3 text-xs">
             <h3 class="font-bold text-sm text-stone-800">📝 {{ isEditMode ? '編輯行程項目' : '新增全新行程' }}</h3>
             <div class="space-y-2">
+                <div><label class="block font-bold text-stone-500">調整日期</label>
+                    <select v-model="formEvent.targetDayIndex" class="w-full bg-[#FAF7F2] border-2 border-[#E2D3B7] p-2 rounded-xl font-bold focus:outline-none text-orange-600">
+                        <option v-for="(day, dIdx) in days" :key="dIdx" :value="dIdx">
+                            Day {{ dIdx + 1 }} ({{ day.date }} {{ day.week }})
+                        </option>
+                    </select>
+                </div>
                 <div><label class="block font-bold text-stone-500">分類欄</label>
                     <select v-model="formEvent.category" class="w-full bg-[#FAF7F2] border-2 border-[#E2D3B7] p-2 rounded-xl font-bold focus:outline-none">
                         <option>景點</option><option>住宿</option><option>美食</option><option>購物</option><option>航班</option><option>其他</option>
@@ -749,7 +756,8 @@ createApp({
         const modalOpen = ref(false);
         const isEditMode = ref(false);
         const editingIdx = ref(null);
-        const formEvent = ref({ category: '景點', name: '', time: '12:00', note: '', image: '', transitMode: 'drive', transitTime: '15分鐘', hours: '', ticket: '' });
+        // 修正：表單物件中加入 targetDayIndex 來追蹤目標天數
+        const formEvent = ref({ category: '景點', name: '', time: '12:00', note: '', image: '', transitMode: 'drive', transitTime: '15分鐘', hours: '', ticket: '', targetDayIndex: 0 });
 
         const expenseModalOpen = ref(false);
         const formExpense = ref({ category: '飲食', name: '', date: '', krw: null, twd: null, payer: '曾曾', shares: ['曾曾', '小陳', '涵涵', '小恩'], payMethod: '現金' });
@@ -838,15 +846,55 @@ createApp({
             });
         };
 
-        const openAddModal = () => { isEditMode.value = false; formEvent.value = { category: '景點', name: '', time: '12:00', note: '', image: '', transitMode: 'drive', transitTime: '15分鐘', hours: '', ticket: '' }; modalOpen.value = true; };
-        const openEditModal = (ev, idx) => { isEditMode.value = true; editingIdx.value = idx; formEvent.value = { ...ev }; modalOpen.value = true; };
+        // 修正：開啟新增彈窗時，將 targetDayIndex 初始化為當前選擇的天數
+        const openAddModal = () => { 
+            isEditMode.value = false; 
+            formEvent.value = { category: '景點', name: '', time: '12:00', note: '', image: '', transitMode: 'drive', transitTime: '15分鐘', hours: '', ticket: '', targetDayIndex: selectedDayIndex.value }; 
+            modalOpen.value = true; 
+        };
         
+        // 修正：開啟編輯彈窗時，同步帶入當前行程所在的天數索引
+        const openEditModal = (ev, idx) => { 
+            isEditMode.value = true; 
+            editingIdx.value = idx; 
+            formEvent.value = { ...ev, targetDayIndex: selectedDayIndex.value }; 
+            modalOpen.value = true; 
+        };
+        
+        // 修正：處理行程跨日期移動的核心邏輯
         const saveEvent = () => {
-            if (isEditMode.value) dayEvents.value[selectedDayIndex.value][editingIdx.value] = { ...formEvent.value };
-            else { formEvent.value.id = Date.now(); dayEvents.value[selectedDayIndex.value].push({ ...formEvent.value }); }
-            dayEvents.value[selectedDayIndex.value].sort((a, b) => a.time.localeCompare(b.time));
+            const targetDay = formEvent.value.targetDayIndex;
+            
+            // 確保目標天數的陣列存在
+            if (!dayEvents.value[targetDay]) {
+                dayEvents.value[targetDay] = [];
+            }
+
+            if (isEditMode.value) {
+                // 如果是在「編輯模式」
+                if (targetDay === selectedDayIndex.value) {
+                    // 狀況 A：日期沒有變，單純修改原卡片內容
+                    dayEvents.value[selectedDayIndex.value][editingIdx.value] = { ...formEvent.value };
+                } else {
+                    // 狀況 B：日期改變了！從原本的天數陣列移除，並推入新天數的陣列中
+                    dayEvents.value[selectedDayIndex.value].splice(editingIdx.value, 1);
+                    dayEvents.value[targetDay].push({ ...formEvent.value });
+                    // 自動跳轉切換視角至新日期，方便使用者確認
+                    selectedDayIndex.value = targetDay;
+                }
+            } else {
+                // 如果是在「全新新增模式」
+                formEvent.value.id = Date.now(); 
+                dayEvents.value[targetDay].push({ ...formEvent.value });
+                // 新增完畢後自動跳轉切換視角至該日期
+                selectedDayIndex.value = targetDay;
+            }
+            
+            // 對目標天數的行程重新進行 24 小時時間排序
+            dayEvents.value[targetDay].sort((a, b) => a.time.localeCompare(b.time));
+            
             modalOpen.value = false;
-            updateCloudData();
+            updateCloudData(); // 同步上傳 Firebase 雲端資料庫
         };
 
         const confirmDeleteEvent = () => {
@@ -977,52 +1025,33 @@ createApp({
 
         // 購物清單長按並移動排序邏輯 (Touch 事件優化)
         const handleShoppingTouchStart = (e, index) => {
-            // 排除點擊「刪除按鈕」或「輸入框」或「勾選狀態」觸發的長按
             if (e.target.closest('button') || e.target.closest('input') || e.target.closest('label')) return;
-            
             isLongPressed = false;
             draggingShoppingIndex.value = index;
-
-            // 設定 500 毫秒後判定為長按
             longPressTimer = setTimeout(() => {
                 isLongPressed = true;
-                // 振動回饋提示使用者進入排序模式 (部分行動裝置支援)
                 if (navigator.vibrate) navigator.vibrate(50);
             }, 500);
         };
 
         const handleShoppingTouchMove = (e) => {
             if (draggingShoppingIndex.value === null) return;
-
-            // 如果尚未達到長按時間就移動了，取消計時器（視為普通網頁滾動）
             if (!isLongPressed) {
                 clearTimeout(longPressTimer);
                 draggingShoppingIndex.value = null;
                 return;
             }
-
-            // 進入排序拖曳狀態後，阻止頁面原生滾動
             e.preventDefault();
-
-            // 取得觸控點當前的 Y / X 座標
             const touch = e.touches[0];
-            
-            // 透過 elementFromPoint 找出手指目前壓在畫面上的哪一個 DOM 物件上
             const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
             if (!targetEl) return;
-
-            // 尋找當前觸碰點下是否有鄰近的購物小卡片項目
             const currentItemEl = targetEl.closest('.shopping-item-card');
             if (currentItemEl && currentItemEl.dataset.index !== undefined) {
                 const targetIndex = parseInt(currentItemEl.dataset.index, 10);
-                
-                // 如果目標索引與當前拖動的索引不同，則進行即時位置交換
                 if (targetIndex !== draggingShoppingIndex.value) {
                     const temp = shoppingList.value[draggingShoppingIndex.value];
                     shoppingList.value[draggingShoppingIndex.value] = shoppingList.value[targetIndex];
                     shoppingList.value[targetIndex] = temp;
-                    
-                    // 重新聚焦當前被拖曳的物件索引
                     draggingShoppingIndex.value = targetIndex;
                 }
             }
@@ -1031,7 +1060,6 @@ createApp({
         const handleShoppingTouchEnd = (e) => {
             clearTimeout(longPressTimer);
             if (isLongPressed && draggingShoppingIndex.value !== null) {
-                // 結束拖曳後，立刻同步回傳雲端 Firebase 資料庫
                 updateCloudData();
             }
             draggingShoppingIndex.value = null;
@@ -1061,7 +1089,6 @@ createApp({
 
         onMounted(() => {
             fetchJejuWeather();
-
             docRef.onSnapshot((doc) => {
                 if (doc.exists) {
                     const parsed = doc.data();

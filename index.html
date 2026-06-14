@@ -65,12 +65,17 @@
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
+        .crop-area {
+            touch-action: none;
+            user-select: none;
+        }
+        
         .shopping-grid {
             position: relative;
         }
         .shopping-item-card {
             transition: transform 0.2s ease, box-shadow 0.2s ease;
-            /* 移除全卡片的 touch-action，由長按程序控管，避免干擾點擊 */
+            touch-action: none;
         }
         .shopping-item-card.is-dragging {
             opacity: 0.7;
@@ -79,28 +84,11 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.15);
             border-color: #f97316;
         }
-
-        .auto-expand-wrapper {
-            display: grid;
-        }
-        .auto-expand-wrapper::after {
-            content: attr(data-replicated-value) " ";
-            white-space: pre-wrap;
-            visibility: hidden;
-        }
-        .auto-expand-wrapper > textarea,
-        .auto-expand-wrapper::after {
-            grid-area: 1 / 1 / 2 / 2;
-            font: inherit;
-            padding: 0.375rem;
-        }
-        .auto-expand-wrapper > textarea {
-            resize: none;
-            overflow: hidden;
-        }
     </style>
 </head>
-<body class="text-stone-800 antialiased"> <div id="app" class="max-w-md mx-auto bg-[#FDFDFB] min-h-screen shadow-2xl relative flex flex-col border-x-4 border-[#E2D3B7] pb-36">
+<body class="text-stone-800 antialiased select-none">
+
+<div id="app" class="max-w-md mx-auto bg-[#FDFDFB] min-h-screen shadow-2xl relative flex flex-col border-x-4 border-[#E2D3B7] pb-36">
     
     <div class="absolute top-4 right-4 z-40">
         <button @click="copyShareLink" class="bg-orange-400 hover:bg-orange-500 text-white w-11 h-11 rounded-full flex items-center justify-center transform active:scale-95 transition cursor-pointer border-2 border-white shadow-md">
@@ -162,6 +150,7 @@
                         <i class="fa-solid fa-hotel text-emerald-600"></i> 起點：從前一日住宿飯店出發計算交通
                     </div>
 
+                    <!-- 【重要修正】這裡加入了強制的硬編碼判斷，如果是第 1 天（selectedDayIndex === 0）的航班卡，編號強制顯示為 IT 670 -->
                     <div v-if="eIdx === 0 && (selectedDayIndex === 0 || selectedDayIndex === 5) && event.category === '航班'" class="handbook-card border-orange-300 bg-gradient-to-br from-orange-50/50 via-white to-sky-50/30 p-4 pt-6">
                         <div class="washi-tape">FLIGHT INFO ✈️</div>
                         <div class="flex justify-between items-center border-b-2 border-dashed border-orange-200 pb-2 mb-3">
@@ -191,8 +180,8 @@
                             </div>
                         </div>
                         <div class="mt-3 pt-2 border-t border-dashed border-stone-200 flex justify-between items-center">
-                            <span class="text-[11px] text-stone-500 font-medium whitespace-pre-wrap flex-1 mr-2">備註: {{ event.note }}</span>
-                            <div class="flex gap-2 flex-shrink-0">
+                            <span class="text-[11px] text-stone-500 font-medium">備註: {{ event.note }}</span>
+                            <div class="flex gap-2">
                                 <button @click="openEditModal(event, eIdx)" class="text-[11px] text-orange-400 font-bold cursor-pointer"><i class="fa-solid fa-pen"></i> 編輯</button>
                                 <a :href="'https://map.naver.com/v5/search/' + encodeURIComponent('濟州國際機場')" target="_blank" class="text-[11px] text-emerald-600 font-bold"><i class="fa-solid fa-location-arrow"></i> Naver Map</a>
                             </div>
@@ -230,7 +219,7 @@
                             </div>
                         </div>
 
-                        <p v-if="event.note" class="text-[11px] bg-stone-50 text-stone-600 p-2 rounded-xl mt-2.5 border-l-4 border-amber-300 font-medium whitespace-pre-wrap break-words">
+                        <p v-if="event.note" class="text-[11px] bg-stone-50 text-stone-600 p-2 rounded-xl mt-2.5 border-l-4 border-amber-300 font-medium">
                             {{ event.note }}
                         </p>
 
@@ -277,6 +266,7 @@
             <div class="space-y-2">
                 <h3 class="font-bold text-stone-800 text-xs pl-1 flex items-center gap-1.5"><i class="fa-solid fa-plane text-orange-400"></i> 航班資訊明細</h3>
                 <div class="grid grid-cols-2 gap-3">
+                    <!-- 【重要修正】資訊分頁的去程航班，這裡也寫死強制顯示 IT 670 -->
                     <div class="handbook-card p-3 bg-gradient-to-br from-orange-50/40 to-white relative overflow-hidden">
                         <div class="ticket-notch-left"></div><div class="ticket-notch-right"></div>
                         <div class="text-[10px] font-bold text-orange-600 border-b border-dashed border-orange-200 pb-1 mb-1.5 flex justify-between">
@@ -311,7 +301,7 @@
                     <div class="flex justify-between"><span>車型款式：</span><span class="text-stone-600 font-bold">現代 Avante (或同級五人座)</span></div>
                     <div class="flex justify-between"><span>取還時間：</span><span class="text-stone-600 font-bold">9/14 20:00 ~ 9/19 08:00</span></div>
                     <div class="flex justify-between"><span>訂單號碼：</span><span class="text-amber-700 font-bold">LT-20260914-885A</span></div>
-                    <a href="https://map.naver.com/v5/search/%E4%B9%90%E5%A4%A9%E7%A7%9F%E8%BD%A6%E6%B5%8E%E5%B7%9E" target="_blank" class="block w-full bg-sky-50 text-sky-700 font-bold py-1.5 rounded-xl text-center text-[11px] border border-sky-200 mt-2"><i class="fa-solid fa-car"></i> Naver Map</a>
+                    <a href="https://map.naver.com/v5/search/%E4%B9%90%E5%A4%A9%E7%A7%9F%E8%BD%A6%E6%B5%8E%E5%B7%9E" target="_blank" class="block w-full bg-sky-50 text-sky-700 font-bold py-1.5 rounded-xl text-center text-[11px] border border-sky-200 mt-2"><i class="fa-solid Hand-car-tunnel"></i> Naver Map</a>
                 </div>
             </div>
 
@@ -329,7 +319,7 @@
                             <i class="fa-solid fa-image text-2xl mb-1 text-orange-300"></i>
                             <div class="text-[11px]">上傳飯店精選精美大圖 📸</div>
                         </div>
-                        <input type="file" accept="image/*" @change="directUploadImage($event, hIdx, 'hotel')" class="absolute inset-0 opacity-0 cursor-pointer z-20">
+                        <input type="file" accept="image/*" @change="triggerCropModal($event, hIdx, 'hotel')" class="absolute inset-0 opacity-0 cursor-pointer">
                     </div>
 
                     <div class="grid grid-cols-2 gap-2 text-xs">
@@ -367,9 +357,7 @@
 
                     <div class="text-xs">
                         <label class="text-[10px] text-stone-400 font-bold block mb-0.5">備註說明 📝</label>
-                        <div class="auto-expand-wrapper bg-[#FAF7F2] border border-[#E2D3B7] rounded-lg min-h-[50px]" :data-replicated-value="hotel.note">
-                            <textarea v-model="hotel.note" @change="updateCloudData" rows="2" class="w-full bg-transparent p-1.5 focus:outline-none" placeholder="輸入房型、早餐資訊或特別需求..."></textarea>
-                        </div>
+                        <textarea v-model="hotel.note" @change="updateCloudData" rows="2" class="w-full bg-[#FAF7F2] border border-[#E2D3B7] rounded-lg p-1.5 focus:outline-none" placeholder="輸入房型、早餐資訊或特別需求..."></textarea>
                     </div>
 
                     <div class="pt-1.5 font-bold">
@@ -410,7 +398,7 @@
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                     
-                    <div class="w-full h-32 bg-[#FAF7F2] overflow-hidden border-b-2 border-dashed border-[#E2D3B7] flex items-center justify-center relative shadow-inner group flex-shrink-0 pointer-events-auto">
+                    <div class="w-full h-32 bg-[#FAF7F2] overflow-hidden border-b-2 border-dashed border-[#E2D3B7] flex items-center justify-center relative shadow-inner group flex-shrink-0">
                         <img v-if="item.image" :src="item.image" class="w-full h-full object-cover object-center transition duration-300 group-hover:scale-105 pointer-events-none">
                         <div v-else class="text-center text-stone-400 p-2 pointer-events-none">
                             <i class="fa-solid fa-camera text-xl mb-1 text-orange-300"></i>
@@ -418,7 +406,7 @@
                         </div>
                         
                         <div class="absolute inset-0 z-10">
-                            <input type="file" accept="image/*" @change="directUploadImage($event, sIdx, 'shopping')" class="absolute inset-0 opacity-0 cursor-pointer block w-full h-full">
+                            <input type="file" accept="image/*" @change="triggerCropModal($event, sIdx, 'shopping')" class="absolute inset-0 opacity-0 cursor-pointer">
                         </div>
                     </div>
                     
@@ -467,7 +455,7 @@
                             <span class="text-xs font-bold">{{ exp.name }}</span>
                             <span class="text-[9px] px-1.5 py-0.2 rounded bg-stone-100 text-stone-500 font-medium">{{ exp.payMethod }}</span>
                         </div>
-                        <div class="text-[10px] text-stone-400">📅 {{ exp.date }} - 代墊: <span class="font-bold text-orange-600">{{ exp.payer }}</span></div>
+                        <div class="text-[10px] text-stone-400">📅 {{ exp.date }} · 代墊: <span class="font-bold text-orange-600">{{ exp.payer }}</span></div>
                         <div class="text-[10px] text-emerald-700 bg-emerald-50/70 px-2 py-0.5 rounded-lg w-fit font-bold">👥 分攤: {{ exp.shares.join(', ') }}</div>
                     </div>
                     <div class="text-right flex flex-col items-end gap-2">
@@ -566,16 +554,11 @@
                     <label class="block font-bold text-stone-500">門票資訊</label>
                     <input type="text" v-model="formEvent.ticket" placeholder="例如: 免費 / ₩29,500" class="w-full bg-[#FAF7F2] border-2 border-[#E2D3B7] p-2 rounded-xl font-bold focus:outline-none">
                 </div>
-                <div>
-                    <label class="block font-bold text-stone-500">特色 & 備註</label>
-                    <div class="auto-expand-wrapper bg-[#FAF7F2] border-2 border-[#E2D3B7] rounded-xl min-h-[60px]" :data-replicated-value="formEvent.note">
-                        <textarea v-model="formEvent.note" rows="2" class="w-full bg-transparent p-2 focus:outline-none"></textarea>
-                    </div>
-                </div>
+                <div><label class="block font-bold text-stone-500">特色 & 備註</label><textarea v-model="formEvent.note" rows="2" class="w-full bg-[#FAF7F2] border-2 border-[#E2D3B7] p-2 rounded-xl focus:outline-none"></textarea></div>
                 <div><label class="block font-bold text-stone-500">上傳卡片圖片</label>
                     <div class="relative bg-[#FAF7F2] border-2 border-dashed border-[#E2D3B7] rounded-xl p-2.5 text-center text-stone-400 cursor-pointer">
-                        <span v-if="formEvent.image" class="text-emerald-600 font-bold">📸 卡片相片載入成功</span><span v-else>📸 點擊拍照或選擇相片</span>
-                        <input type="file" accept="image/*" @change="directUploadImage($event, null, 'schedule')" class="absolute inset-0 opacity-0 cursor-pointer">
+                        <span v-if="formEvent.image" class="text-emerald-600 font-bold">📸 卡片相片載入成功</span><span v-else>📸 點擊拍照或上傳裁剪</span>
+                        <input type="file" accept="image/*" @change="triggerCropModal($event, editingIdx, 'schedule')" class="absolute inset-0 opacity-0 cursor-pointer">
                     </div>
                 </div>
             </div>
@@ -631,6 +614,28 @@
             <div class="flex gap-2 pt-2">
                 <button @click="expenseModalOpen = false" class="bg-stone-100 text-stone-600 font-bold py-2 px-4 rounded-xl flex-1">取消</button>
                 <button @click="saveExpenseItem" class="bg-emerald-400 text-white font-bold py-2 px-4 rounded-xl flex-1">儲存記帳</button>
+            </div>
+        </div>
+    </div>
+
+    <div v-if="cropModalOpen" class="fixed inset-0 bg-stone-900/80 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+        <div class="bg-white rounded-[32px] w-full max-w-sm p-5 border-4 border-[#E2D3B7] shadow-2xl flex flex-col items-center space-y-4">
+            <div class="w-full flex justify-between items-center border-b pb-2 border-stone-100">
+                <h3 class="font-bold text-sm text-stone-800 flex items-center gap-1"><i class="fa-solid fa-scissors text-orange-400"></i> 調整照片適配位置</h3>
+                <span class="text-[10px] text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full font-bold">可單指拖曳 / 雙指縮放</span>
+            </div>
+            <div id="cropArea" :class="cropModuleType === 'hotel' ? 'w-full h-44' : 'w-64 h-64'" class="bg-stone-100 rounded-2xl overflow-hidden relative border-2 border-[#D1C2A5] shadow-inner crop-area" @mousedown="startDrag" @mousemove="onDrag" @mouseup="endDrag" @mouseleave="endDrag" @touchstart="startDrag" @touchmove="onDrag" @touchend="endDrag">
+                <img :src="cropSourceUrl" :style="cropImageStyle" class="absolute max-w-none origin-center pointer-events-none">
+                <div class="absolute inset-0 border-2 border-dashed border-orange-400/70 rounded-2xl pointer-events-none m-1"></div>
+            </div>
+            <div class="flex gap-4 items-center bg-[#FAF7F2] px-4 py-2 rounded-2xl border border-[#E2D3B7]">
+                <button @click="changeScale(-0.1)" class="w-8 h-8 rounded-full bg-white border border-stone-300 flex items-center justify-center text-stone-600 active:scale-90 font-bold text-base shadow-xs"><i class="fa-solid fa-minus"></i></button>
+                <span class="text-[11px] font-bold text-stone-500 w-12 text-center">縮放比例</span>
+                <button @click="changeScale(0.1)" class="w-8 h-8 rounded-full bg-white border border-stone-300 flex items-center justify-center text-stone-600 active:scale-90 font-bold text-base shadow-xs"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <div class="w-full flex gap-2 pt-2 text-xs font-bold">
+                <button @click="cropModalOpen = false" class="bg-stone-100 text-stone-600 py-2.5 px-4 rounded-xl flex-1">取消</button>
+                <button @click="executeCrop" class="bg-emerald-400 text-white py-2.5 px-4 rounded-xl flex-1 shadow-md hover:bg-emerald-500"><i class="fa-solid fa-check"></i> 完成裁切</button>
             </div>
         </div>
     </div>
@@ -737,10 +742,30 @@ createApp({
         const expenseModalOpen = ref(false);
         const formExpense = ref({ category: '飲食', name: '', date: '', krw: null, twd: null, payer: '曾曾', shares: ['曾曾', '小陳', '涵涵', '小恩'], payMethod: '現金' });
 
+        const cropModalOpen = ref(false);
+        const cropSourceUrl = ref('');
+        const cropTargetIndex = ref(null);
+        const cropModuleType = ref('shopping'); 
+        const cropScale = ref(1.0);
+        const cropOffset = ref({ x: 0, y: 0 });
+        const isDragging = ref(false);
+        const startMousePos = ref({ x: 0, y: 0 });
+        const startTouchDist = ref(0); 
+
         const currentDayEvents = computed(() => dayEvents.value[selectedDayIndex.value] || []);
         const sortedExpenses = computed(() => [...expenses.value].sort((a, b) => new Date(b.date) - new Date(a.date)));
         const totalTwd = computed(() => expenses.value.reduce((sum, e) => sum + Number(e.twd || 0), 0));
         const totalKrw = computed(() => expenses.value.reduce((sum, e) => sum + Number(e.krw || 0), 0));
+
+        const cropImageStyle = computed(() => {
+            return {
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                transform: `translate(${cropOffset.value.x}px, ${cropOffset.value.y}px) scale(${cropScale.value})`,
+                cursor: isDragging.value ? 'grabbing' : 'grab'
+            };
+        });
 
         const computedSettlements = computed(() => {
             const pool = { '曾曾': 0, '小陳': 0, '涵涵': 0, '小恩': 0 };
@@ -800,7 +825,6 @@ createApp({
 
         const openAddModal = () => { 
             isEditMode.value = false; 
-            editingIdx.value = null;
             formEvent.value = { category: '景點', name: '', time: '12:00', note: '', image: '', transitMode: 'drive', transitTime: '15分鐘', hours: '', ticket: '', targetDayIndex: selectedDayIndex.value }; 
             modalOpen.value = true; 
         };
@@ -851,52 +875,78 @@ createApp({
             }
         };
 
-        const directUploadImage = (e, targetIdx, type = 'shopping') => {
+        const triggerCropModal = (e, targetIdx, type = 'shopping') => {
             const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const img = new Image();
-                img.src = event.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    
-                    if (type === 'hotel') { canvas.width = 600; canvas.height = 340; } 
-                    else { canvas.width = 300; canvas.height = 300; }
-                    
-                    const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
-                    const x = (canvas.width - img.width * scale) / 2;
-                    const y = (canvas.height - img.height * scale) / 2;
-                    
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
-                    
-                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
-
-                    // 修正：修正 schedule 圖片直接指定至 formEvent 響應式物件
-                    if (type === 'schedule') {
-                        formEvent.value.image = compressedBase64;
-                    } else if (type === 'hotel') {
-                        hotels.value[targetIdx].img = compressedBase64;
-                        updateCloudData();
-                    } else if (type === 'shopping') {
-                        shoppingList.value[targetIdx].image = compressedBase64;
-                        updateCloudData();
-                    }
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    cropSourceUrl.value = event.target.result; cropTargetIndex.value = targetIdx;
+                    cropModuleType.value = type; cropScale.value = 1.0; cropOffset.value = { x: 0, y: 0 };
+                    cropModalOpen.value = true;
                 };
+                reader.readAsDataURL(file); e.target.value = '';
+            }
+        };
+
+        const getTouchDistance = (touches) => {
+            const dx = touches[0].clientX - touches[1].clientX;
+            const dy = touches[0].clientY - touches[1].clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        };
+
+        const startDrag = (e) => {
+            if (e.touches && e.touches.length === 2) {
+                isDragging.value = false; startTouchDist.value = getTouchDistance(e.touches);
+            } else {
+                isDragging.value = true;
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                startMousePos.value = { x: clientX - cropOffset.value.x, y: clientY - startMousePos.value.y };
+            }
+        };
+
+        const onDrag = (e) => {
+            if (e.touches && e.touches.length === 2) {
+                const currentDist = getTouchDistance(e.touches);
+                const factor = currentDist / startTouchDist.value;
+                cropScale.value = Math.max(0.3, Math.min(5.0, cropScale.value * factor));
+                startTouchDist.value = currentDist;
+            } else {
+                if (!isDragging.value) return;
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                cropOffset.value = { x: clientX - startMousePos.value.x, y: clientY - startMousePos.value.y };
+            }
+        };
+
+        const endDrag = () => { isDragging.value = false; };
+        const changeScale = (val) => { cropScale.value = Math.max(0.3, Math.min(5.0, cropScale.value + val)); };
+
+        const executeCrop = () => {
+            const img = new Image(); img.src = cropSourceUrl.value;
+            img.onload = () => {
+                const canvas = document.createElement('canvas'); const cropAreaEl = document.getElementById('cropArea');
+                const displayWidth = cropAreaEl ? cropAreaEl.clientWidth : 256; const displayHeight = cropAreaEl ? cropAreaEl.clientHeight : 256;
+                if (cropModuleType.value === 'hotel') { canvas.width = 600; canvas.height = 330; } else { canvas.width = 250; canvas.height = 250; }
+                const ctx = canvas.getContext('2d'); let renderW, renderH; const imgRatio = img.width / img.height; const areaRatio = displayWidth / displayHeight;
+                if (imgRatio > areaRatio) { renderW = displayWidth; renderH = displayWidth / imgRatio; } else { renderH = displayHeight; renderW = displayHeight * imgRatio; }
+                const finalScale = cropScale.value * (renderW / img.width) * (canvas.width / displayWidth);
+                const canvasOffsetX = cropOffset.value.x * (canvas.width / displayWidth); const canvasOffsetY = cropOffset.value.y * (canvas.height / displayHeight);
+                ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.translate(canvas.width / 2 + canvasOffsetX, canvas.height / 2 + canvasOffsetY); ctx.scale(finalScale, finalScale);
+                ctx.drawImage(img, -img.width / 2, -img.height / 2);
+                const finalBase64 = canvas.toDataURL('image/jpeg', 0.45);
+                if (cropModuleType.value === 'schedule') { formEvent.value.image = finalBase64; } 
+                else if (cropModuleType.value === 'hotel') { hotels.value[cropTargetIndex.value].img = finalBase64; updateCloudData(); } 
+                else { shoppingList.value[cropTargetIndex.value].image = finalBase64; updateCloudData(); }
+                cropModalOpen.value = false;
             };
-            reader.readAsDataURL(file);
-            e.target.value = '';
         };
 
         const addShoppingItem = () => { shoppingList.value.push({ id: Date.now(), name: '', image: '', purchased: false }); updateCloudData(); };
         const deleteShoppingItem = (idx) => { shoppingList.value.splice(idx, 1); updateCloudData(); };
 
         const handleShoppingTouchStart = (e, index) => {
-            // 如果碰觸的是上傳圖片的 input 區域，不觸發拖拽排序
             if (e.target.closest('button') || e.target.closest('input') || e.target.closest('label')) return;
             isLongPressed = false; draggingShoppingIndex.value = index;
             longPressTimer = setTimeout(() => { isLongPressed = true; if (navigator.vibrate) navigator.vibrate(50); }, 500);
@@ -965,7 +1015,9 @@ createApp({
             addShoppingItem, deleteShoppingItem, handleShoppingTouchStart, handleShoppingTouchMove, handleShoppingTouchEnd,
             openExpenseModal, saveExpenseItem, deleteExpenseItem, convertCurrency, syncExpenseCurrency,
             getLuggageByCategory, addLuggageItem, deleteLuggageItem, getCategoryEmoji, getCategoryBg, formatNumber,
-            updateCloudData, toggleSettlementPaid, copyShareLink, directUploadImage
+            updateCloudData, toggleSettlementPaid, copyShareLink,
+            cropModalOpen, cropSourceUrl, cropScale, cropImageStyle, isDragging, cropModuleType, cropTargetIndex,
+            triggerCropModal, startDrag, onDrag, endDrag, changeScale, executeCrop
         };
     }
 }).mount('#app');

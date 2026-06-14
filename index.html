@@ -70,7 +70,7 @@
         }
         .shopping-item-card {
             transition: transform 0.2s ease, box-shadow 0.2s ease;
-            touch-action: none;
+            /* 移除全卡片的 touch-action，由長按程序控管，避免干擾點擊 */
         }
         .shopping-item-card.is-dragging {
             opacity: 0.7;
@@ -100,9 +100,7 @@
         }
     </style>
 </head>
-<body class="text-stone-800 antialiased select-none">
-
-<div id="app" class="max-w-md mx-auto bg-[#FDFDFB] min-h-screen shadow-2xl relative flex flex-col border-x-4 border-[#E2D3B7] pb-36">
+<body class="text-stone-800 antialiased"> <div id="app" class="max-w-md mx-auto bg-[#FDFDFB] min-h-screen shadow-2xl relative flex flex-col border-x-4 border-[#E2D3B7] pb-36">
     
     <div class="absolute top-4 right-4 z-40">
         <button @click="copyShareLink" class="bg-orange-400 hover:bg-orange-500 text-white w-11 h-11 rounded-full flex items-center justify-center transform active:scale-95 transition cursor-pointer border-2 border-white shadow-md">
@@ -331,7 +329,7 @@
                             <i class="fa-solid fa-image text-2xl mb-1 text-orange-300"></i>
                             <div class="text-[11px]">上傳飯店精選精美大圖 📸</div>
                         </div>
-                        <input type="file" accept="image/*" @change="directUploadImage($event, hIdx, 'hotel')" class="absolute inset-0 opacity-0 cursor-pointer">
+                        <input type="file" accept="image/*" @change="directUploadImage($event, hIdx, 'hotel')" class="absolute inset-0 opacity-0 cursor-pointer z-20">
                     </div>
 
                     <div class="grid grid-cols-2 gap-2 text-xs">
@@ -412,7 +410,7 @@
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                     
-                    <div class="w-full h-32 bg-[#FAF7F2] overflow-hidden border-b-2 border-dashed border-[#E2D3B7] flex items-center justify-center relative shadow-inner group flex-shrink-0">
+                    <div class="w-full h-32 bg-[#FAF7F2] overflow-hidden border-b-2 border-dashed border-[#E2D3B7] flex items-center justify-center relative shadow-inner group flex-shrink-0 pointer-events-auto">
                         <img v-if="item.image" :src="item.image" class="w-full h-full object-cover object-center transition duration-300 group-hover:scale-105 pointer-events-none">
                         <div v-else class="text-center text-stone-400 p-2 pointer-events-none">
                             <i class="fa-solid fa-camera text-xl mb-1 text-orange-300"></i>
@@ -420,7 +418,7 @@
                         </div>
                         
                         <div class="absolute inset-0 z-10">
-                            <input type="file" accept="image/*" @change="directUploadImage($event, sIdx, 'shopping')" class="absolute inset-0 opacity-0 cursor-pointer">
+                            <input type="file" accept="image/*" @change="directUploadImage($event, sIdx, 'shopping')" class="absolute inset-0 opacity-0 cursor-pointer block w-full h-full">
                         </div>
                     </div>
                     
@@ -577,7 +575,7 @@
                 <div><label class="block font-bold text-stone-500">上傳卡片圖片</label>
                     <div class="relative bg-[#FAF7F2] border-2 border-dashed border-[#E2D3B7] rounded-xl p-2.5 text-center text-stone-400 cursor-pointer">
                         <span v-if="formEvent.image" class="text-emerald-600 font-bold">📸 卡片相片載入成功</span><span v-else>📸 點擊拍照或選擇相片</span>
-                        <input type="file" accept="image/*" @change="directUploadImage($event, isEditMode ? editingIdx : null, 'schedule')" class="absolute inset-0 opacity-0 cursor-pointer">
+                        <input type="file" accept="image/*" @change="directUploadImage($event, null, 'schedule')" class="absolute inset-0 opacity-0 cursor-pointer">
                     </div>
                 </div>
             </div>
@@ -878,6 +876,7 @@ createApp({
                     
                     const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
 
+                    // 修正：修正 schedule 圖片直接指定至 formEvent 響應式物件
                     if (type === 'schedule') {
                         formEvent.value.image = compressedBase64;
                     } else if (type === 'hotel') {
@@ -897,6 +896,7 @@ createApp({
         const deleteShoppingItem = (idx) => { shoppingList.value.splice(idx, 1); updateCloudData(); };
 
         const handleShoppingTouchStart = (e, index) => {
+            // 如果碰觸的是上傳圖片的 input 區域，不觸發拖拽排序
             if (e.target.closest('button') || e.target.closest('input') || e.target.closest('label')) return;
             isLongPressed = false; draggingShoppingIndex.value = index;
             longPressTimer = setTimeout(() => { isLongPressed = true; if (navigator.vibrate) navigator.vibrate(50); }, 500);

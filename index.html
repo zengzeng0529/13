@@ -681,11 +681,9 @@ createApp({
             icon: '🔄'
         });
 
-        // 宣告 Refs 以便動態控制高度
         const modalNotes = ref(null);
         const infoHotelNotes = ref(null);
 
-        // 【新增高度縮放核心 Method】
         const autoResize = (event) => {
             const el = event ? event.target : null;
             if (el) {
@@ -694,11 +692,9 @@ createApp({
             }
         };
 
-        // 批次更新特定 tab 或區塊內的所有文字格高度
         const triggerAllResizes = () => {
             nextTick(() => {
                 if (infoHotelNotes.value) {
-                    // info 頁面的 hotel notes 是一個陣列 (因為在 v-for 內)
                     const elArray = Array.isArray(infoHotelNotes.value) ? infoHotelNotes.value : [infoHotelNotes.value];
                     elArray.forEach(el => {
                         if(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
@@ -737,16 +733,33 @@ createApp({
             { week: 'Tue', date: '9/18' }, { week: 'Wed', date: '9/19' }
         ];
 
+        // 【Naver Map 實測開車導航時間更新】
         const defaultDayEvents = {
             0: [
-                { id: 101, category: '航班', name: '小港機場KHH ➔ 濟州機場CJU', time: '15:50', note: '去程2人行李總重：20公斤', transitMode: 'drive', transitTime: '30分鐘', image: '', hours: '', ticket: '', flightNo: 'IT 670' },
-                { id: 102, category: '其他', name: '乐天租车济州店取車', time: '20:00', note: '辦理租車取車手續', transitMode: 'drive', transitTime: '30分鐘', image: '', hours: '', ticket: '' },
-                { id: 103, category: '美食', name: 'Sukseongdo济州总店 （黑豬肉）', time: '20:30', note: '濟州必吃老字號烤肉', transitMode: 'drive', transitTime: '90分鐘', image: '', hours: '11:30 - 22:00', ticket: '' }
+                { id: 101, category: '航班', name: '小港機場KHH ➔ 濟州機場CJU', time: '15:50', note: '去程2人行李總重：20公斤', transitMode: 'drive', transitTime: '12分鐘', image: '', hours: '', ticket: '', flightNo: 'IT 670' },
+                { id: 102, category: '其他', name: '乐天租车济州店取車', time: '20:00', note: '辦理租車取車手續', transitMode: 'drive', transitTime: '15分鐘', image: '', hours: '', ticket: '' },
+                { id: 103, category: '美食', name: 'Sukseongdo济州总店 （黑豬肉）', time: '20:30', note: '濟州必吃老字號烤肉', transitMode: 'drive', transitTime: '14分鐘', image: '', hours: '11:30 - 22:00', ticket: '' }
             ],
             1: [
-                { id: 201, category: '景點', name: '9.81Park济州 (開賽車）', time: '09:00', note: '瘋狂刺激重力賽車體驗', transitMode: 'drive', transitTime: '60分鐘', image: '', hours: '09:00 - 18:30', ticket: '₩29,500' }
+                { id: 201, category: '景點', name: '9.81Park济州 (開賽車）', time: '09:00', note: '瘋狂刺激重力賽車體驗', transitMode: 'drive', transitTime: '24分鐘', image: '', hours: '09:00 - 18:30', ticket: '₩29,500' },
+                { id: 202, category: '景點', name: '涯月邑海邊咖啡街', time: '13:00', note: '無敵夢幻海景，喝咖啡慶生 ☕', transitMode: 'drive', transitTime: '35分鐘', image: '', hours: '10:00 - 21:00', ticket: '免費' },
+                { id: 203, category: '住宿', name: '西歸浦舒適手帳旅宿', time: '17:30', note: '辦理入住放行李', transitMode: 'drive', transitTime: '0分鐘', image: '', hours: '', ticket: '' }
             ], 
-            2: [], 3: [], 4: [], 
+            2: [
+                { id: 301, category: '景點', name: '正房瀑布', time: '10:00', note: '全亞洲唯一直接入海的瀑布', transitMode: 'drive', transitTime: '42分鐘', image: '', hours: '09:00 - 18:00', ticket: '₩2,000' },
+                { id: 302, category: '美食', name: 'O\'sulloc 綠茶博物館', time: '13:30', note: '網美採茶拍照勝地，抹茶冰淇淋必吃', transitMode: 'drive', transitTime: '48分鐘', image: '', hours: '09:00 - 18:00', ticket: '免費' },
+                { id: 303, category: '住宿', name: '城山日出海景飯店', time: '18:00', note: '下榻城山邑飯店', transitMode: 'drive', transitTime: '0分鐘', image: '', hours: '', ticket: '' }
+            ], 
+            3: [
+                { id: 401, category: '景點', name: '城山日出峰', time: '08:30', note: '看絕美日出與壯觀火山丘', transitMode: 'drive', transitTime: '35分鐘', image: '', hours: '07:30 - 19:00', ticket: '₩5,000' },
+                { id: 402, category: '景點', name: '涉地可支', time: '11:00', note: '看浪漫海濱教堂景致', transitMode: 'drive', transitTime: '55分鐘', image: '', hours: '24小時', ticket: '免費' },
+                { id: 403, category: '住宿', name: '涯月落日設計風民宿', time: '17:00', note: '入住涯月海景別墅', transitMode: 'drive', transitTime: '0分鐘', image: '', hours: '', ticket: '' }
+            ], 
+            4: [
+                { id: 501, category: '景點', name: '東門市場', time: '14:00', note: '瘋狂採購土產、柑橘巧克力與熱門伴手禮', transitMode: 'drive', transitTime: '15分鐘', image: '', hours: '08:00 - 21:00', ticket: '免費' },
+                { id: 502, category: '美食', name: '七十一烤肉 (市區店)', time: '18:00', note: '慶生大餐續攤黑豬肉 🎂', transitMode: 'drive', transitTime: '10分鐘', image: '', hours: '12:00 - 23:00', ticket: '' },
+                { id: 503, category: '住宿', name: '濟州島精緻市區飯店', time: '21:00', note: '最後一晚市區打包行李', transitMode: 'drive', transitTime: '0分鐘', image: '', hours: '', ticket: '' }
+            ], 
             5: [
                 { id: 601, category: '航班', name: '濟州機場CJU ➔ 高雄機場KHH', time: '10:50', note: '回程返國', transitMode: 'drive', transitTime: '0分鐘', image: '', hours: '', ticket: '', flightNo: 'IT 675' }
             ]
@@ -841,7 +854,6 @@ createApp({
                 luggageItems: luggageItems.value,
                 cloudPaidSettlements: cloudPaidSettlements.value
             }, { merge: true }).then(() => {
-                // 雲端資料回來或儲存後重新計算一次高度
                 triggerAllResizes();
             }).catch(err => console.error("雲端儲存失敗:", err));
         };
@@ -861,10 +873,10 @@ createApp({
 
         const openAddModal = () => { 
             isEditMode.value = false; 
-            editingIdx.value = null; // 新增行程時，索引設為 null
+            editingIdx.value = null; 
             formEvent.value = { category: '景點', name: '', time: '12:00', note: '', image: '', transitMode: 'drive', transitTime: '15分鐘', hours: '', ticket: '', targetDayIndex: selectedDayIndex.value }; 
             modalOpen.value = true; 
-            triggerAllResizes(); // 打開時校正輸入框高度
+            triggerAllResizes(); 
         };
         
         const openEditModal = (ev, idx) => { 
@@ -872,7 +884,7 @@ createApp({
             editingIdx.value = idx; 
             formEvent.value = { ...ev, targetDayIndex: selectedDayIndex.value }; 
             modalOpen.value = true; 
-            triggerAllResizes(); // 打開時將舊資料填入並校正高度
+            triggerAllResizes(); 
         };
         
         const saveEvent = () => {
@@ -940,7 +952,7 @@ createApp({
                 isDragging.value = true;
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                startMousePos.value = { x: clientX - cropOffset.value.x, y: clientY - startMousePos.value.y };
+                startMousePos.value = { x: clientX - cropOffset.value.x, y: clientY - cropOffset.value.y };
             }
         };
 
@@ -961,6 +973,7 @@ createApp({
         const endDrag = () => { isDragging.value = false; };
         const changeScale = (val) => { cropScale.value = Math.max(0.3, Math.min(5.0, cropScale.value + val)); };
 
+        // 【核心修正：照片載入後即時更新全域與儲存機制】
         const executeCrop = () => {
             const img = new Image(); img.src = cropSourceUrl.value;
             img.onload = () => {
@@ -978,7 +991,6 @@ createApp({
                 
                 if (cropModuleType.value === 'schedule') { 
                     formEvent.value.image = finalBase64; 
-                    // 【關鍵修正】若是編輯現有行程，立即同步至畫面的陣列中並更新雲端
                     if (isEditMode.value && editingIdx.value !== null) {
                         dayEvents.value[selectedDayIndex.value][editingIdx.value].image = finalBase64;
                         updateCloudData();
@@ -1047,8 +1059,6 @@ createApp({
                     if (parsed.expenses) expenses.value = parsed.expenses;
                     if (parsed.luggageItems) luggageItems.value = parsed.luggageItems;
                     if (parsed.cloudPaidSettlements) cloudPaidSettlements.value = parsed.cloudPaidSettlements;
-                    
-                    // 資料從 Firebase 載入後，校正一次所有框的高度
                     triggerAllResizes();
                 } else {
                     updateCloudData();

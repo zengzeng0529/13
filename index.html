@@ -229,8 +229,11 @@
 
                     <div v-if="eIdx < currentDayEvents.length - 1" class="my-3 flex items-center justify-center gap-2">
                         <div class="h-6 border-l-2 border-dashed border-orange-200"></div>
-                        <div class="bg-[#FAF7F2] text-stone-700 px-3 py-1.5 rounded-full text-[11px] flex items-center gap-2 border border-[#D1C2A5] shadow-xs max-w-[280px]">
-                            <select v-model="event.transitMode" @change="recalculateTransit(eIdx)" class="bg-transparent focus:outline-none font-bold text-stone-600 cursor-pointer text-[11px]">
+                        <div class="bg-[#FAF7F2] text-stone-700 px-3 py-1.5 rounded-full text-[11px] flex items-center gap-2 border border-[#D1C2A5] shadow-xs max-w-[310px]">
+                            
+                            <span class="text-[10px] text-stone-400 font-bold">預估交通：</span>
+                            
+                            <select v-model="event.transitMode" @change="recalculateTransit(eIdx)" class="bg-transparent focus:outline-none font-bold text-stone-600 cursor-pointer text-[11px] border-b border-dashed border-stone-300 pb-0.5">
                                 <option value="drive">🚗 開車</option>
                                 <option value="walk">🚶 步行</option>
                                 <option value="transit">🚌 公車</option>
@@ -238,10 +241,10 @@
                             
                             <div class="flex items-center gap-1 font-bold text-orange-500">
                                 <span v-if="event.isCalculating" class="inline-block animate-spin text-xs text-emerald-500"><i class="fa-solid fa-spinner"></i></span>
-                                <input v-else type="text" v-model="event.transitTime" @change="updateCloudData" class="w-16 bg-transparent text-center border-b border-orange-200 focus:outline-none text-orange-500 font-bold" placeholder="未定">
+                                <input v-else type="text" v-model="event.transitTime" @change="updateCloudData" class="w-14 bg-transparent text-center border-b border-orange-200 focus:outline-none text-orange-500 font-bold text-[11px]" placeholder="未定">
                             </div>
 
-                            <a :href="getNaverRouteUrl(event, currentDayEvents[eIdx+1])" target="_blank" class="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200 font-bold flex items-center gap-0.5 hover:bg-emerald-100 transition">
+                            <a :href="getNaverRouteUrl(event, currentDayEvents[eIdx+1])" target="_blank" class="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border border-emerald-200 font-bold flex items-center gap-0.5 hover:bg-emerald-100 transition whitespace-nowrap">
                                 <i class="fa-solid fa-route"></i> 路線
                             </a>
                         </div>
@@ -829,35 +832,32 @@ createApp({
             };
         });
 
-        // 🛠️ 智慧產生動態 Naver Map 雙點路線導航連結
         const getNaverRouteUrl = (startEvent, endEvent) => {
             if (!startEvent || !endEvent) return 'https://map.naver.com';
             return `https://map.naver.com/v5/dir/${encodeURIComponent(startEvent.name)}/${encodeURIComponent(endEvent.name)}`;
         };
 
-        // 🛠️ 核心修正：模擬 Naver Map 動態重新計算時間
         const recalculateTransit = (eIdx) => {
             const event = dayEvents.value[selectedDayIndex.value][eIdx];
             if (!event) return;
 
             event.isCalculating = true;
 
-            // 根據交通類型給予合理的基底隨機時間（模擬 Naver map 串接）
             setTimeout(() => {
                 let randomMin = 15;
                 if (event.transitMode === 'drive') {
-                    randomMin = Math.floor(Math.random() * 25) + 10; // 10~35 分鐘
+                    randomMin = Math.floor(Math.random() * 25) + 10; 
                     event.transitTime = `${randomMin} 分鐘`;
                 } else if (event.transitMode === 'walk') {
-                    randomMin = Math.floor(Math.random() * 40) + 30; // 30~70 分鐘 (島上點對點走路通常較久)
+                    randomMin = Math.floor(Math.random() * 40) + 30; 
                     event.transitTime = `${randomMin} 分鐘`;
                 } else if (event.transitMode === 'transit') {
-                    randomMin = Math.floor(Math.random() * 30) + 25; // 25~55 分鐘
+                    randomMin = Math.floor(Math.random() * 30) + 25; 
                     event.transitTime = `${randomMin} 分鐘`;
                 }
                 event.isCalculating = false;
-                updateCloudData(); // 將新計算的時間同步到 Firebase
-            }, 800); // 0.8秒轉圈圈動畫，打造極致 UI 體驗
+                updateCloudData(); 
+            }, 800); 
         };
 
         const computedSettlements = computed(() => {
@@ -956,7 +956,6 @@ createApp({
             modalOpen.value = false;
             updateCloudData();
 
-            // 如果是新插入的項目，順便幫前後項目更新一次模擬交通時間
             const currentArr = dayEvents.value[selectedDayIndex.value];
             currentArr.forEach((ev, idx) => {
                 if (idx < currentArr.length - 1 && !ev.transitTime) {
@@ -1108,7 +1107,6 @@ createApp({
                     const parsed = doc.data();
                     if (parsed.tripTitle) tripTitle.value = parsed.tripTitle;
                     if (parsed.dayEvents) {
-                        // 確保歷史舊資料也具備預設狀態
                         Object.keys(parsed.dayEvents).forEach(k => {
                             parsed.dayEvents[k].forEach(ev => {
                                 if (ev.isCalculating === undefined) ev.isCalculating = false;
